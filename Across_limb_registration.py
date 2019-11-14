@@ -11,26 +11,21 @@ from cv2 import imread
 import matplotlib.pyplot as plt
 import datetime
 
-print(datetime.datetime.now())
-
-# masterinput, the dir that contains all the subfolders of scans
-masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 0' 
-masteroutput = os.path.join(masterdirpath,'..','Registration week 0')
-if not os.path.exists(masteroutput):
-    os.mkdir(masteroutput)
-
-# load reference VOI
-Reference_img = sitk.ReadImage("/media/spl/D/CT image analysis test/339 L week 1 VOI350.nii",sitk.sitkFloat32)
-
 #_______imreader for 2d image sequence_________________________________________
-def imreadseq(folderID) :
-    global masterdirpath
+def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     images = []
-    for image in sorted(os.listdir(os.path.join(masterdirpath,folderID))):
-        simage = imread(os.path.join(masterdirpath,folderID,image),0)
-        images.append(simage)
+    
+    for image in sorted(os.listdir(fdpath)):
+        if '000' in image:
+            simage = imread(os.path.join(fdpath,image),0)
+            if rmbckgrd:
+                mask = simage > rmbckgrd
+                simage = simage * mask
+            images.append(simage)
     images = np.asarray(images)
-    images = sitk.GetImageFromArray(images)
+
+    if sitkimg == True:
+        images = sitk.GetImageFromArray(images)
     return images
 
 #_______imsave for 2d .tif image sequence which can be read by CTan____________
@@ -112,8 +107,20 @@ def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
     tar_resampled = sitk.Resample(tar_img, ref_img, final_transform, sitk.sitkLinear, 0.0, tar_img.GetPixelID())
     return tar_resampled, final_transform
 
+
+print(datetime.datetime.now())
+
+# masterinput, the dir that contains all the subfolders of scans
+masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 0' 
+masteroutput = os.path.join(masterdirpath,'..','Registration week 0')
+if not os.path.exists(masteroutput):
+    os.mkdir(masteroutput)
+
+# load reference VOI
+Reference_img = imreadseq("/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0/440 week 0 left registered", rmbckgrd=60)
+
 for folder in sorted(os.listdir(masteroutput)):
-    if '427 week 0 right' in folder:
+    if '440 week 0 right' in folder:
         folder = folder[:-11] 
         metric_values = []
         multires_iterations = []
@@ -121,7 +128,7 @@ for folder in sorted(os.listdir(masteroutput)):
         if not os.path.exists(suboutput):
             os.mkdir(suboutput)
         print('Registration of {} is in process...'.format(folder))
-        tar_img = imreadseq(folder)
+        tar_img = imreadseq(os.path.join(masterdirpath,folder),rmbckgrd=60)
         mask_tar = tar_img>70
         mask_tar = sitk.Cast(mask_tar, sitk.sitkFloat32)
         ini_transform = cent_transform(Reference_img, mask_tar)
@@ -134,7 +141,7 @@ for folder in sorted(os.listdir(masteroutput)):
             imsaveseq(tar_reg, folder, suboutput)
             sitk.WriteTransform(tar_reg_transform,os.path.join(suboutput,folder+'reg_transform.tfm'))
             del tar_img, tar_reg, tar_reg_transform, metric_values, multires_iterations
-        except Exception:
+        except RuntimeError:
             print('Registration of {} failed...'.format(folder))
             pass
         print(datetime.datetime.now().time())
