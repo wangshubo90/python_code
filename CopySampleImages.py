@@ -3,7 +3,7 @@
 import os
 import shutil
 
-masterdir = 'D:\\MicroCT data\\4th batch bone mets loading study\\Registration week 2'
+masterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 3'
 sampledir = os.path.join(masterdir,'sampleImg')
 
 if not os.path.exists(sampledir):
@@ -18,7 +18,7 @@ for folder in os.listdir(masterdir):
 
         try:
             distal=images[0]
-            midline = images[-53]
+            midline = images[-303]
             proximal=images[-3]
             sampleimg = [proximal,distal,midline]
             for img in sampleimg:

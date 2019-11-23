@@ -111,16 +111,16 @@ def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
 print(datetime.datetime.now())
 
 # masterinput, the dir that contains all the subfolders of scans
-masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 0' 
-masteroutput = os.path.join(masterdirpath,'..','Registration week 0')
+masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 2' 
+masteroutput = os.path.join(masterdirpath,'..','Registration week 2')
 if not os.path.exists(masteroutput):
     os.mkdir(masteroutput)
 
 # load reference VOI
-Reference_img = imreadseq("/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0/440 week 0 left registered", rmbckgrd=60)
+Reference_img = imreadseq("/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0/453 week 0 left registered", rmbckgrd=60)
 
 for folder in sorted(os.listdir(masteroutput)):
-    if '440 week 0 right' in folder:
+    if '453 week 2 left' in folder:
         folder = folder[:-11] 
         metric_values = []
         multires_iterations = []

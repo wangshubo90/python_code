@@ -17,7 +17,7 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     for image in sorted(os.listdir(fdpath)):
         if '000' in image:
             simage = cv2.imread(os.path.join(fdpath,image),0)
-            if rmbckgrd:
+            if not rmbckgrd is None:
                 mask = simage > rmbckgrd
                 simage = simage * mask
             images.append(simage)
@@ -108,19 +108,20 @@ if __name__ == "__main__":
     print(datetime.datetime.now())
 
     # masterinput, the dir that contains all the subfolders of scans
-    #masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 1' 
-    masterdirpath = 'D:\\MicroCT data\\4th batch bone mets loading study\\L & R week 2' 
+    masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 3' 
+    #masterdirpath = 'D:\\MicroCT data\\4th batch bone mets loading study\\L & R week 2' 
 
-    masteroutput = os.path.join(masterdirpath,'..','Registration week 2')
+    masteroutput = os.path.join(masterdirpath,'..','Registration week 3')
     if not os.path.exists(masteroutput):
         os.mkdir(masteroutput)
 
     # load reference VOI
-    #refmasterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0'
-    refmasterdir = 'D:\\MicroCT data\\4th batch bone mets loading study\\Registration week 0'
+    refmasterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0'
+    #refmasterdir = 'D:\\MicroCT data\\4th batch bone mets loading study\\Registration week 0'
 
+    failedreg = []
     for folder in sorted(os.listdir(masterdirpath)):
-        if folder in ['449 week 2 right']: 
+        if folder in ['443 week 3 right']: 
             #imgtitle = folder[:-11] 
             imgtitle = folder
             reftitle = folder[:9]+'0'+folder[10:]+' registered'
@@ -145,6 +146,7 @@ if __name__ == "__main__":
                 sitk.WriteTransform(tar_reg_transform,os.path.join(outputsubdir,imgtitle+'reg_transform.tfm'))
                 del ref_img,tar_img, tar_reg, tar_reg_transform, metric_values, multires_iterations
             except RuntimeError:
+                failedreg.append(folder)
                 print('Registration of {} failed...'.format(imgtitle))
                 pass
 
