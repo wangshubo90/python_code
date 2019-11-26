@@ -83,7 +83,7 @@ def reg_transform(ref_img,tar_img, ini_transform):
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
     registration_method.SetMetricSamplingPercentage(0.01)
     registration_method.SetInterpolator(sitk.sitkLinear)
-    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.2,
+    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.4,
                                                                 numberOfIterations=500,
                                                                 convergenceMinimumValue=1e-5,
                                                                convergenceWindowSize=5)
@@ -108,10 +108,10 @@ if __name__ == "__main__":
     print(datetime.datetime.now())
 
     # masterinput, the dir that contains all the subfolders of scans
-    masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 3' 
+    masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 4' 
     #masterdirpath = 'D:\\MicroCT data\\4th batch bone mets loading study\\L & R week 2' 
 
-    masteroutput = os.path.join(masterdirpath,'..','Registration week 3')
+    masteroutput = os.path.join(masterdirpath,'..','Registration week 4')
     if not os.path.exists(masteroutput):
         os.mkdir(masteroutput)
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     failedreg = []
     for folder in sorted(os.listdir(masterdirpath)):
-        if folder in ['443 week 3 right']: 
+        if folder in ['442 week 4 right']: 
             #imgtitle = folder[:-11] 
             imgtitle = folder
             reftitle = folder[:9]+'0'+folder[10:]+' registered'

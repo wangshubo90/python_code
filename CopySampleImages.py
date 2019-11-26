@@ -3,7 +3,7 @@
 import os
 import shutil
 
-masterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 4'
+masterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 4'
 sampledir = os.path.join(masterdir,'sampleImg')
 
 if not os.path.exists(sampledir):
