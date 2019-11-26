@@ -34,9 +34,11 @@ def mkcomposite(refimg, tarimg, mask = None):
     comp.astype(np.uint8) 
     return comp
 
+def batch_mkcomp()
+
 if __name__ == "__main__":
     ref = 'week 0'
-    tar = 'week 2'
+    tar = 'week 3'
     refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/4th batch bone mets loading study','Registration '+ref)
     tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/4th batch bone mets loading study','Registration '+tar)
     outputmasterdir = os.path.join(tarimgmasterdir,'..','w{}w{}composite'.format(ref[-1],tar[-1]))
