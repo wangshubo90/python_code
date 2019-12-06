@@ -40,7 +40,7 @@ def mkcomposite(refimg, tarimg, mask = None):
 def batch_mkcomp(folder):
     global ref, tar, refimgmasterdir, tarimgmasterdir, outputmasterdir,tibia_only_mask
     tartitle = folder
-    reftitle = folder.replace(tar,ref)
+    reftitle = folder.replace(tar,'day 1')
     refimg = imreadseq(os.path.join(refimgmasterdir,reftitle),sitkimg=False)
     tarimg = imreadseq(os.path.join(tarimgmasterdir,tartitle),sitkimg=False)
     composite = mkcomposite(refimg,tarimg,mask = tibia_only_mask)
@@ -54,9 +54,9 @@ def batch_mkcomp(folder):
 
 if __name__ == "__main__":
     ref = 'week 0'
-    tar = 'week 4'
-    refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/4th batch bone mets loading study','Registration '+ref)
-    tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/4th batch bone mets loading study','Registration '+tar)
+    tar = 'week 3'
+    refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019','Registration tibia '+ref)
+    tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019','Registration tibia '+tar)
     outputmasterdir = os.path.join(tarimgmasterdir,'..','w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     
     fdlist = []
     for folder in os.listdir(tarimgmasterdir):
-        if 'week 4' in folder:
+        if not folder[:3] in [str(x) for x in range(410,415)]:
             fdlist.append(folder)
 
     # we parallel the for loop by multiprocessing
