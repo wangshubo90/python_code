@@ -111,17 +111,18 @@ def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
 print(datetime.datetime.now())
 
 # masterinput, the dir that contains all the subfolders of scans
-masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 2' 
-masteroutput = os.path.join(masterdirpath,'..','Registration week 2')
+masterdirpath = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/L & R tibia week 0' 
+masteroutput = os.path.join(masterdirpath,'..','Registration tibia week 0')
 if not os.path.exists(masteroutput):
     os.mkdir(masteroutput)
 
 # load reference VOI
-Reference_img = imreadseq("/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0/453 week 0 left registered", rmbckgrd=60)
+Reference_img = imreadseq("/media/spl/D/MicroCT data/Yoda1 11.13.2019/Ref_adult_male_tibia", rmbckgrd=60)
+#Reference_img = sitk.ReadImage('/media/spl/D/CT image analysis test/339 L week 1 VOI350.nii')
 
-for folder in sorted(os.listdir(masteroutput)):
-    if '453 week 2 left' in folder:
-        folder = folder[:-11] 
+for folder in sorted(os.listdir(masterdirpath)):
+    if folder in ["413 day 1 right tibia"]:
+        #folder = folder[:-11] 
         metric_values = []
         multires_iterations = []
         suboutput = os.path.join(masteroutput, folder+' registered')

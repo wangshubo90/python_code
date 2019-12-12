@@ -4,7 +4,7 @@
 
 import os
 
-Masterdir = 'D:\MicroCT data\\4th batch bone mets loading study\w0w4composite'
+Masterdir = 'D:\\MicroCT data\\Yoda1 11.13.2019\\w0w3composite'
 ctan_list =os.path.join(Masterdir,os.path.basename(Masterdir)+'_CTANlist.ctl')
 info ='Info=0000000001000000FFFF0000000000000000000000000000000000000000000000000000000000000000000000000000E60E993B64EED03F00000000000000000000000000000000000000000000000004000000000000002C'
 i=0

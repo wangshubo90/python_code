@@ -108,23 +108,23 @@ if __name__ == "__main__":
     print(datetime.datetime.now())
 
     # masterinput, the dir that contains all the subfolders of scans
-    masterdirpath = '/media/spl/D/MicroCT data/4th batch bone mets loading study/L & R week 4' 
+    masterdirpath = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/L & R tibia week 3' 
     #masterdirpath = 'D:\\MicroCT data\\4th batch bone mets loading study\\L & R week 2' 
 
-    masteroutput = os.path.join(masterdirpath,'..','Registration week 4')
+    masteroutput = os.path.join(masterdirpath,'..','Registration tibia week 3')
     if not os.path.exists(masteroutput):
         os.mkdir(masteroutput)
 
     # load reference VOI
-    refmasterdir = '/media/spl/D/MicroCT data/4th batch bone mets loading study/Registration week 0'
+    refmasterdir = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Registration tibia week 0'
     #refmasterdir = 'D:\\MicroCT data\\4th batch bone mets loading study\\Registration week 0'
 
     failedreg = []
     for folder in sorted(os.listdir(masterdirpath)):
-        if folder in ['442 week 4 right']: 
+        if True: 
             #imgtitle = folder[:-11] 
             imgtitle = folder
-            reftitle = folder[:9]+'0'+folder[10:]+' registered'
+            reftitle = folder.replace("week 3","day 1")+" registered"
             metric_values = []
             multires_iterations = []
             outputsubdir = os.path.join(masteroutput, imgtitle+' registered')
