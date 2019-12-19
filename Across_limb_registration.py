@@ -10,13 +10,14 @@ import SimpleITK as sitk
 from cv2 import imread
 import matplotlib.pyplot as plt
 import datetime
+import re
 
 #_______imreader for 2d image sequence_________________________________________
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     images = []
     
     for image in sorted(os.listdir(fdpath)):
-        if '000' in image:
+        if re.search(r"(00\d{4,6})",image):
             simage = imread(os.path.join(fdpath,image),0)
             if rmbckgrd:
                 mask = simage > rmbckgrd
@@ -29,14 +30,14 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     return images
 
 #_______imsave for 2d .tif image sequence which can be read by CTan____________
-def imsaveseq(images,folder, suboutput):
+def imsaveseq(images,imgtitle, suboutput):
     global masteroutput
     images = sitk.GetArrayFromImage(images)
     len = images.shape[0]
     for i in range(len):
         newimage = images[i,:,:].astype('uint8')
-        skimage.io.imsave(os.path.join(suboutput,folder+'%7.6d.tif' %(i+1)),newimage)
-    #   skimage.io.imsave(os.path.join(suboutput,'{} {:0>6}.tif'.format(folder, (i+1))),newimage)
+        skimage.io.imsave(os.path.join(suboutput,imgtitle+'%7.6d.tif' %(i+1)),newimage)
+    #   skimage.io.imsave(os.path.join(suboutput,'{} {:0>6}.tif'.format(imgtitle, (i+1))),newimage)
 #_______Define a couple of functions for sitk registration_____________________
 
 def start_plot():
@@ -52,8 +53,8 @@ def end_plot( ):
     plt.plot(multires_iterations, [metric_values[index] for index in multires_iterations], 'b*')
     plt.xlabel('Iteration Number',fontsize=12)
     plt.ylabel('Metric Value',fontsize=12)
-    plt.title(folder)
-    plt.savefig(os.path.join(suboutput,folder+' regplot.png'))
+    #plt.title(folderID)
+    #plt.savefig(os.path.join(suboutput,folder+' regplot.png'))
 
     #del metric_values
     #del multires_iterations
@@ -79,7 +80,7 @@ def cent_transform (ref_img,tar_img):
     return initial_transform
 
 # registration transform
-def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
+def reg_transform(ref_img,tar_img, ini_transform, folder):
       # get sitk image from folderID
     registration_method = sitk.ImageRegistrationMethod()
     # Similarity metric settings.
@@ -92,8 +93,8 @@ def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
                                                                 convergenceMinimumValue=1e-5,
                                                                convergenceWindowSize=5)
     registration_method.SetOptimizerScalesFromPhysicalShift()
-    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [4,2,1])
-    registration_method.SetSmoothingSigmasPerLevel(smoothingSigmas=[2,1,0])
+    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [8,8,4])
+    registration_method.SetSmoothingSigmasPerLevel(smoothingSigmas=[2,2,1])
     registration_method.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
     # or can do initial transform in place
     registration_method.SetInitialTransform(ini_transform, inPlace=False)
@@ -107,44 +108,49 @@ def reg_transform(ref_img,tar_img, ini_transform, folderID,suboutput):
     tar_resampled = sitk.Resample(tar_img, ref_img, final_transform, sitk.sitkLinear, 0.0, tar_img.GetPixelID())
     return tar_resampled, final_transform
 
-
-print(datetime.datetime.now())
-
-# masterinput, the dir that contains all the subfolders of scans
-masterdirpath = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/L & R tibia week 0' 
-masteroutput = os.path.join(masterdirpath,'..','Registration tibia week 0')
-if not os.path.exists(masteroutput):
-    os.mkdir(masteroutput)
-
-# load reference VOI
-Reference_img = imreadseq("/media/spl/D/MicroCT data/Yoda1 11.13.2019/Ref_adult_male_tibia", rmbckgrd=60)
-#Reference_img = sitk.ReadImage('/media/spl/D/CT image analysis test/339 L week 1 VOI350.nii')
-
-for folder in sorted(os.listdir(masterdirpath)):
-    if folder in ["413 day 1 right tibia"]:
-        #folder = folder[:-11] 
-        metric_values = []
-        multires_iterations = []
-        suboutput = os.path.join(masteroutput, folder+' registered')
-        if not os.path.exists(suboutput):
-            os.mkdir(suboutput)
-        print('Registration of {} is in process...'.format(folder))
-        tar_img = imreadseq(os.path.join(masterdirpath,folder),rmbckgrd=60)
-        mask_tar = tar_img>70
-        mask_tar = sitk.Cast(mask_tar, sitk.sitkFloat32)
-        ini_transform = cent_transform(Reference_img, mask_tar)
-        del mask_tar
-        #ini_transform = sitk.ReadTransform(os.path.join(suboutput,folder+'reg_transform.tfm'))
+if __name__ == "__main__":
     
-        try:
-            tar_reg, tar_reg_transform = reg_transform(Reference_img,tar_img,ini_transform,folder,suboutput)
-            print('Registration of {} is completed. Saving...'.format(folder))
-            imsaveseq(tar_reg, folder, suboutput)
-            sitk.WriteTransform(tar_reg_transform,os.path.join(suboutput,folder+'reg_transform.tfm'))
-            del tar_img, tar_reg, tar_reg_transform, metric_values, multires_iterations
-        except RuntimeError:
-            print('Registration of {} failed...'.format(folder))
-            pass
-        print(datetime.datetime.now().time())
 
-print('Done!')
+    print(datetime.datetime.now())
+
+    # masterinput, the dir that contains all the subfolders of scans
+    masterdirpath = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/L & R tibia week 0' 
+    masteroutput = os.path.join(masterdirpath,'..','Registration tibia week 0')
+    if not os.path.exists(masteroutput):
+        os.mkdir(masteroutput)
+
+    # load reference VOI
+    Reference_img = imreadseq("/media/spl/D/MicroCT data/Yoda1 11.13.2019/Ref_adult_male_tibia", rmbckgrd=60)
+    #Reference_img = sitk.ReadImage('/media/spl/D/CT image analysis test/339 L week 1 VOI350.nii')
+
+    for folder in sorted(os.listdir(masterdirpath)):
+        if folder in ["413 day 1 right tibia"]:
+            #folder = folder[:-11] 
+
+            metric_values = []
+            multires_iterations = []
+
+            suboutput = os.path.join(masteroutput, folder+' registered')
+
+            if not os.path.exists(suboutput):
+                os.mkdir(suboutput)
+            print('Registration of {} is in process...'.format(folder))
+            tar_img = imreadseq(os.path.join(masterdirpath,folder),rmbckgrd=60)
+            mask_tar = tar_img>70
+            mask_tar = sitk.Cast(mask_tar, sitk.sitkFloat32)
+            ini_transform = cent_transform(Reference_img, mask_tar)
+            del mask_tar
+            #ini_transform = sitk.ReadTransform(os.path.join(suboutput,folder+'reg_transform.tfm'))
+        
+            try:
+                tar_reg, tar_reg_transform = reg_transform(Reference_img,tar_img,ini_transform, folder)
+                print('Registration of {} is completed. Saving...'.format(folder))
+                imsaveseq(tar_reg, folder, suboutput)
+                sitk.WriteTransform(tar_reg_transform,os.path.join(suboutput,folder+'reg_transform.tfm'))
+                del tar_img, tar_reg, tar_reg_transform, metric_values, multires_iterations
+            except RuntimeError:
+                print('Registration of {} failed...'.format(folder))
+                pass
+            print(datetime.datetime.now().time())
+
+    print('Done!')

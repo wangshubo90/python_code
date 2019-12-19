@@ -9,13 +9,13 @@ import SimpleITK as sitk
 import cv2
 import matplotlib.pyplot as plt
 import datetime
-
+import re
 
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     images = []
     
     for image in sorted(os.listdir(fdpath)):
-        if '000' in image:
+        if re.search(r"(00\d{4,6})",image):
             simage = cv2.imread(os.path.join(fdpath,image),0)
             if not rmbckgrd is None:
                 mask = simage > rmbckgrd
