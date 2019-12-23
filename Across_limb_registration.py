@@ -36,7 +36,7 @@ def imsaveseq(images,imgtitle, suboutput):
     len = images.shape[0]
     for i in range(len):
         newimage = images[i,:,:].astype('uint8')
-        skimage.io.imsave(os.path.join(suboutput,imgtitle+'%7.6d.tif' %(i+1)),newimage)
+        skimage.io.imsave(os.path.join(suboutput,imgtitle+'%7.6d.tif' %(i+1)),newimage,check_contrast=False)
     #   skimage.io.imsave(os.path.join(suboutput,'{} {:0>6}.tif'.format(imgtitle, (i+1))),newimage)
 #_______Define a couple of functions for sitk registration_____________________
 
@@ -88,12 +88,18 @@ def reg_transform(ref_img,tar_img, ini_transform, folder):
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
     registration_method.SetMetricSamplingPercentage(0.01)
     registration_method.SetInterpolator(sitk.sitkLinear)
+    '''
     registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.2,
                                                                 numberOfIterations=500,
                                                                 convergenceMinimumValue=1e-5,
                                                                convergenceWindowSize=5)
+    '''
+    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.3,
+                                                            numberOfIterations=500,
+                                                            convergenceMinimumValue=1e-6,
+                                                            convergenceWindowSize=10)
     registration_method.SetOptimizerScalesFromPhysicalShift()
-    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [8,8,4])
+    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [8,4,2])
     registration_method.SetSmoothingSigmasPerLevel(smoothingSigmas=[2,2,1])
     registration_method.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
     # or can do initial transform in place

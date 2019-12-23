@@ -33,7 +33,7 @@ def imsaveseq(images,fdpath,imgtitle, sitkimages=True):
     len = images.shape[0]
     for i in range(len):
         newimage = images[i,:,:].astype('uint8')
-        skimage.io.imsave(os.path.join(fdpath,imgtitle+'%7.6d.tif' %(i+1)),newimage)
+        skimage.io.imsave(os.path.join(fdpath,imgtitle+'%7.6d.tif' %(i+1)),newimage,check_contrast=False)
     #   skimage.io.imsave(os.path.join(outputsubdir,'{} {:0>6}.tif'.format(folder, (i+1))),newimage)
 
 def start_plot():

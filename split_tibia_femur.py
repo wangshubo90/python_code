@@ -45,7 +45,7 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_femur
 
 if __name__ == "__main__":
-    masterfolder = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Reconstruction week 0'
+    masterfolder = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Reconstruction week 3'
 
     masterout = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg'
     for folder in os.listdir(masterfolder):
