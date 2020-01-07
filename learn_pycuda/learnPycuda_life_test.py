@@ -21,19 +21,16 @@ ker = SourceModule("""
 #define _INDEX(x,y)  ( _XM(x)  + _YM(y) * _WIDTH )
 
 // return the number of living neighbors for a given cell                
-__device__ int nbrs(int x, int y, int * in)
-{
-     return ( in[ _INDEX(x -1, y+1) ] + in[ _INDEX(x-1, y) ] + in[ _INDEX(x-1, y-1) ] \
-                   + in[ _INDEX(x, y+1)] + in[_INDEX(x, y - 1)] \
-                   + in[ _INDEX(x+1, y+1) ] + in[ _INDEX(x+1, y) ] + in[ _INDEX(x+1, y-1) ] );
-}
+
 __global__ void conway_ker(int * lattice_out, int *lattice  )
 {
    // x, y are the appropriate values for the cell covered by this thread
    int x = _X, y = _Y;
    
    // count the number of neighbors around the current cell
-   int n = nbrs(x, y, lattice);
+   int n = lattice[ _INDEX(x -1, y+1) ] + lattice[ _INDEX(x-1, y) ] + lattice[ _INDEX(x-1, y-1) ] \
+                   + lattice[ _INDEX(x, y+1)] + lattice[_INDEX(x, y - 1)] \
+                   + lattice[ _INDEX(x+1, y+1) ] + lattice[ _INDEX(x+1, y) ] + lattice[ _INDEX(x+1, y-1) ] ;
                    
     
     // if the current cell is alive, then determine if it lives or dies for the next generation.
