@@ -1,3 +1,7 @@
+#! /home/spl/ml/sitk/bin/python
+
+# -*- coding: utf-8 -*-
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -23,31 +27,37 @@ cort_df = cort_df.set_index([cort_df.columns[i] for i in range(3)])
 cort_df = cort_df.unstack("Time_wk")
 cort_df.columns = [cort_df.columns[i][1] for i in range(len(cort_df.columns))]
 cort_df = cort_df.T.reset_index().drop(('index',''), axis = 1)
+cort_df.columns = list(map(lambda x: x[0]+' '+x[1],cort_df.columns))
+
+cort_df[["439 left  Loaded","439 right Nonloaded"]] = cort_df[["439 right Nonloaded","439 left  Loaded"]] 
+cort_df[["450 left  Loaded","450 right Nonloaded"]] = cort_df[["450 right Nonloaded","450 left  Loaded"]] 
 
 # Initialize the figure
 plt.style.use('seaborn-darkgrid')
  
 # create a color palette
 palette = plt.get_cmap('Set1')
-plt.figure(figsize=(20,20))
+plt.figure(figsize=(18,18))
 # multiple line plot
+
+
 for i in range(0,len(cort_df.columns),2):
     num = int(i/2)+1
-    plt.subplot(6,4,num)
-    plt.plot(list(cort_df.index),cort_df.iloc[:,i],'b-',
-                list(cort_df.index),cort_df.iloc[:,i+1],'r--',
+    plt.subplot(5,5,num)
+    plt.plot(list(cort_df.index),cort_df.iloc[:,i],'r--',
+                list(cort_df.index),cort_df.iloc[:,i+1],'b-',
                     marker='', linewidth=1.9, alpha=0.9,label = cort_df.columns[i][0][:3])
-    plt.xlim(0,5)
+    plt.xlim(-0.5,5)
     plt.ylim(0,100)
     plt.xticks(range(5))
-    plt.yticks(range(0,100,10))
+    plt.yticks(range(0,110,20))
 
     if num in range(18) :
         plt.tick_params(labelbottom='off')
         
     if num not in list(range(1,22,4)) :
         plt.tick_params(labelleft='off')
-    plt.title(cort_df.columns[i][0][:3], loc='center', fontsize=12, fontweight=0, color=palette(num) )
+    plt.title(cort_df.columns[i][:3], loc='center', fontsize=12, fontweight=0, color="black" )
 
 plt.savefig("Cort BvTv individual animal plots.png")
 plt.legend()

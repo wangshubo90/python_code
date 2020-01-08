@@ -1,8 +1,9 @@
 {
     "python.pythonPath": "/home/spl/ml/sitk/bin/python",
     "python.venvFolders": [
-        "C:\\Users\\wangs\\Documents\\pythonenv\\sitk\\Scripts",
+        "'C:\\Users\\wangs\\Documents\\pythonenv\\sitk\\Scripts'",
         "C:\\Users\\wangs\\Documents\\pythonenv\\sitk",
         "C:\\Users\\wangs\\Documents\\pythonenv"
-    ]
+    ],
+    "python.venvPath": "C:\\Users\\wangs\\Documents\\pythonenv"
 }
