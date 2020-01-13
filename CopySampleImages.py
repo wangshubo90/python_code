@@ -3,7 +3,7 @@
 import os
 import shutil
 
-masterdir = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/L & R week 3'
+masterdir = 'D:\\MicroCT data\\Yoda1 11.13.2019\\Tibia Femur fully seg\\Registered tibia week 0'
 sampledir = os.path.join(masterdir,'sampleImg')
 
 if not os.path.exists(sampledir):

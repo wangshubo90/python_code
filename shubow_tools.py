@@ -38,16 +38,16 @@ def imsaveseq(images,fdpath,imgtitle, sitkimages=True):
         skimage.io.imsave(os.path.join(fdpath,imgtitle+'%7.6d.tif' %(i+1)),newimage,check_contrast=False)
     #   skimage.io.imsave(os.path.join(outputsubdir,'{} {:0>6}.tif'.format(folder, (i+1))),newimage)
 
-def imreadseq_multithread(fdpath,sitkimg = True, rmbckgrd = None):
+def imreadgrey(imagepath):
+    image_at_z=cv2.imread(imagepath,0)
+    return image_at_z
+
+def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None):
     images = []
     imglist = [p for p in glob.glob(os.path.join(fdpath,"*")) if re.search(r"(00\d{4,6})",p)]
     imglist = sorted(imglist)
 
-    def imreadgrey(imagepath):
-        image_at_z=cv2.imread(imagepath,0)
-        return image_at_z
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers = thread) as executor:
         for idx,image in enumerate(executor.map(imreadgrey,imglist)):
             if not rmbckgrd is None:
                 image = image * (image > rmbckgrd)

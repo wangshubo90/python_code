@@ -5,25 +5,26 @@
 import SimpleITK as sitk
 from Across_limb_registration import *
 import os
-import datetime
 import re
+import logging
 
-print(datetime.datetime.now().time())
+ref_img = imreadseq('/media/spl/D/MicroCT data/MicroCT registration ref/dist_femur_ref/VOI',rmbckgrd=60)
+#ref_img = ref_img[:,:,200:1000] # for tibia
 
-'''
-ref_img = imreadseq('/media/spl/D/MicroCT data/whole_tibia_ref/VOI',rmbckgrd=60)
-ref_img = ref_img[:,:,200:1000]
-'''
 
-masterdir = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg/Femur week 3'
-refdir = os.path.join(masterdir,'..','Registered week 0')
+masterdir = '/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg/Femur week 0'
+#refdir = os.path.join(masterdir,'..','Registered week 0')
 
-for file in sorted(os.listdir(masterdir))[4:6]:
+format = "%(asctime)s: %(message)s"
+logging.basicConfig(format=format, level=logging.INFO,
+                    datefmt="%H:%M:%S")
+
+for file in sorted(os.listdir(masterdir))[12:13]:
     if re.search(r'\d{3} week \d (left|right) femur',file):
         imgtitle = file
         
-        reftitle = file.replace('week 3','week 0')+' registered'
-        ref_img = imreadseq(os.path.join(refdir,reftitle))
+        #reftitle = file.replace('week 3','week 0')+' registered'
+        #ref_img = imreadseq(os.path.join(refdir,reftitle))
         
         tar_img = imreadseq(os.path.join(masterdir,file))
         tar_img = tar_img[25:-200,0:-150,:] # femur
@@ -36,14 +37,13 @@ for file in sorted(os.listdir(masterdir))[4:6]:
 
         suboutput = os.path.join(masterdir,imgtitle+" registered")
 
-        print('Registration of {} is in process...'.format(imgtitle))
+        logging.info('Registration of {} is in process...'.format(imgtitle))
         try:
             tar_reg,tar_reg_transform = reg_transform(ref_img,tar_img,ini_transform,imgtitle)
             if not os.path.exists(suboutput): os.mkdir(suboutput)
             imsaveseq(tar_reg,imgtitle+'_Reg',suboutput)
-            print('Registration of {} is in completed...'.format(imgtitle))
+            logging.info('Registration of {} is in completed...'.format(imgtitle))
         except RuntimeError as ex:
-            print('Registration of {} failed...'.format(imgtitle))
+            logging.info('Registration of {} failed...'.format(imgtitle))
             print(ex)
             pass
-        print(datetime.datetime.now().time())

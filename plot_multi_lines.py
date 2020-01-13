@@ -8,7 +8,7 @@ import os
 from skimage.io import imsave
 from pandas.plotting import parallel_coordinates
 
-os.chdir("D:\\Others\\CTan_results_analysis")
+os.chdir("/media/spl/D/Others/CTan_results_analysis")
 
 cort_df = pd.read_excel("4th batch cort CTan results.xlsx",sheet_name="Tumor",usecols="A,B,C,J")
 
@@ -55,12 +55,33 @@ for i in range(0,len(cort_df.columns),2):
     if num in range(18) :
         plt.tick_params(labelbottom='off')
         
-    if num not in list(range(1,22,4)) :
+    if num not in list(range(1,22,5)) :
         plt.tick_params(labelleft='off')
     plt.title(cort_df.columns[i][:3], loc='center', fontsize=12, fontweight=0, color="black" )
+    plt.legend(("Loaded","Nonloaded"), loc = "lower left")
+    
+#plt.savefig("diff.png")
 
-plt.savefig("Cort BvTv individual animal plots.png")
-plt.legend()
+
+loaded_df = cort_df.iloc[:,::2]
+nonloaded_df = cort_df.iloc[:,1::2]
+
+loaded_df.columns = [i[0:3] for i in loaded_df.columns]
+nonloaded_df.columns = loaded_df.columns
+
+diff_df = nonloaded_df.subtract(loaded_df)
+n_colors = len(diff_df.columns)
+plt.figure(figsize=(6,6))
+palette = plt.get_cmap('Set1')
+#f.set_color_cycle([palette(1.*i/n_colors) for i in range (n_colors)])
+
+for i in range(len(diff_df.columns)):
+    #plt.subplot(5,5,i+1)
+    plt.plot(list(diff_df.index),diff_df.iloc[:,i],'b-',
+            marker='',color=palette(i), linewidth=1.9, alpha=0.9,label = diff_df.columns)
+    
+    plt.legend(diff_df.columns,bbox_to_anchor=(1.2, 1), loc = "upper right",borderaxespad=0.)
+plt.savefig("diff.png")
 '''
 new_cort_df = cort_df[["week 1","week 2","week 3", "week 4","load_nload"]]
 plt.figure(figsize=(8,7))
