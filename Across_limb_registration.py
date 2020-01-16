@@ -46,15 +46,15 @@ def start_plot():
     metric_values = []
     multires_iterations = []
 
-def end_plot( ):
-    global metric_values, multires_iterations,masteroutput, folder, suboutput
+def end_plot(title,path ):
+    global metric_values, multires_iterations,masteroutput, suboutput
     
     plt.plot(metric_values, 'r')
     plt.plot(multires_iterations, [metric_values[index] for index in multires_iterations], 'b*')
     plt.xlabel('Iteration Number',fontsize=12)
     plt.ylabel('Metric Value',fontsize=12)
-    #plt.title(folderID)
-    #plt.savefig(os.path.join(suboutput,folder+' regplot.png'))
+    plt.title(title)
+    plt.savefig(os.path.join(path,title+' regplot.png'))
 
     #del metric_values
     #del multires_iterations
@@ -80,16 +80,16 @@ def cent_transform (ref_img,tar_img):
     return initial_transform
 
 # registration transform
-def reg_transform(ref_img,tar_img, ini_transform, folder):
+def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
       # get sitk image from folderID
     registration_method = sitk.ImageRegistrationMethod()
     # Similarity metric settings.
     registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
-    registration_method.SetMetricSamplingPercentage(0.01)
+    registration_method.SetMetricSamplingPercentage(0.05)
     registration_method.SetInterpolator(sitk.sitkLinear)
     '''
-    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.2,
+    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.4,
                                                                 numberOfIterations=500,
                                                                 convergenceMinimumValue=1e-5,
                                                                convergenceWindowSize=5)
@@ -98,6 +98,7 @@ def reg_transform(ref_img,tar_img, ini_transform, folder):
                                                             numberOfIterations=500,
                                                             convergenceMinimumValue=1e-6,
                                                             convergenceWindowSize=10)
+    
     registration_method.SetOptimizerScalesFromPhysicalShift()
     registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [8,4,2])
     registration_method.SetSmoothingSigmasPerLevel(smoothingSigmas=[2,2,1])
@@ -106,7 +107,7 @@ def reg_transform(ref_img,tar_img, ini_transform, folder):
     registration_method.SetInitialTransform(ini_transform, inPlace=False)
 
     registration_method.AddCommand(sitk.sitkStartEvent, start_plot)
-    registration_method.AddCommand(sitk.sitkEndEvent, end_plot)
+    registration_method.AddCommand(sitk.sitkEndEvent, lambda: end_plot(imgtitle,suboutput))
     registration_method.AddCommand(sitk.sitkMultiResolutionIterationEvent, update_multires_iterations) 
     registration_method.AddCommand(sitk.sitkIterationEvent, lambda: update_metric_values(registration_method))
 

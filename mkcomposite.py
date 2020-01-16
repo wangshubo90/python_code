@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-from Through_time_registration import imreadseq, imsaveseq
+from shubow_tools import imreadseq, imsaveseq
 import os, sys
 import SimpleITK as sitk
 import numpy as np
@@ -10,6 +10,8 @@ from joblib import Parallel,delayed
 import multiprocessing
 import glob
 import re
+import logging
+import concurrent.futures
 
 
 def extractmsk(img,mask):
@@ -40,6 +42,7 @@ def mkcomposite(refimg, tarimg, mask = None):
     return comp
 
 def batch_mkcomp(tardir,outputmasterdir,mask = None):
+    logging.info('Thread started for {}'.format(os.path.basename(tardir)))
     pat = re.compile(r'week \d?')
     refdir = re.sub(pat,"week 0",tardir,count = 3)
     refimg = imreadseq(refdir,sitkimg=False)
@@ -51,19 +54,23 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     imsaveseq(composite,outdir,comptitle,sitkimages=False)
-    print(comptitle+' is saved!')
+    logging.info('Thread finished for '+comptitle)
 
 
 if __name__ == "__main__":
+
+    format = "%(asctime)s: %(message)s"
+    logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
+
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered '+ref)
-    tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered '+tar)
-    outputmasterdir = os.path.join(tarimgmasterdir,'..','w{}w{}composite'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered femur '+ref)
+    tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered femur '+tar)
+    outputmasterdir = os.path.join(tarimgmasterdir,'..','femur w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
-    
+
     '''
     fdlist = []
     for folder in os.listdir(tarimgmasterdir):
@@ -75,16 +82,27 @@ if __name__ == "__main__":
     num_cores = multiprocessing.cpu_count()
     results = Parallel(n_jobs=num_cores)(delayed(batch_mkcomp)(os.path.join(tarimgmasterdir,i),outputmasterdir) 
                         for i in sorted(os.listdir(tarimgmasterdir))) 
-    
+
     # original for loop
     '''
-    for tardir in sorted(os.listdir(tarimgmasterdir))[1:]:
+
+    '''
+    for tardir in sorted(os.listdir(tarimgmasterdir)):
         tardir = os.path.join(tarimgmasterdir,tardir)
         try:
             batch_mkcomp(tardir,outputmasterdir)
         except Exception:
             print('Mkcomposite for {} failed'.format(os.path.basename(tardir)))
             pass
+    '''
+    tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
+    compdirls = [outputmasterdir]*len(tardirls)
 
-    print('Done!')
+    with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
+        executor.map(batch_mkcomp,tardirls,compdirls)
+
+        '''for a, b in zip(tardirls,compdirls):
+            executor.submit(batch_mkcomp,a,b)'''
+
+    logging.info('Done!')
     
