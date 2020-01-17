@@ -12,6 +12,8 @@ import datetime
 import re
 import concurrent.futures
 import glob
+from scipy.ndimage.measurements import center_of_mass
+import math
 
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
     images = []
@@ -59,3 +61,72 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None):
         images = sitk.GetImageFromArray(images)
 
     return images
+
+def auto_crop(image,background=120):
+    '''
+    Description: this function shrint the frame of x-y plane of a 3D image
+                 in the form of ndarray. Z-axis is not changed.
+    Parameters: image: ndarray
+                background: int, default value 120
+    Returns:    image: ndarray
+    '''
+    # make a z-project as in ImageJ
+    zstack = np.array(image.max(axis=0) > background, dtype = 'int')
+
+    ylen, xlen = zstack.shape
+
+    xbin = zstack.sum(axis = 0)
+    ybin = zstack.sum(axis = 1)
+
+    xl,*w,xr = np.where(xbin > int(0.03*ylen))[0]  # note : np.where() returns a tuple not a ndarray
+    yl,*w,yr = np.where(ybin > int(0.03*xlen))[0]
+
+    # if close to edges already, set as edges
+    xl = max(0,xl-10)
+    xr = min(xr+10,xlen)
+    yl = max(0,yl-10)
+    yr = min(yr+10,ylen)
+
+    return image[:,yl:yr,xl:xr]
+
+def z_axis_alignment(image):
+    '''
+    Description: adjust the orientation of the object by the following steps:
+                    1. find the center of mass of the image 
+                        in the middle of z-axis
+                    2. find the center of mass of the bottom image
+                    3. calculate Euler angles to rotate the object
+    Parameter: image: ndarray
+    Returns: [alpha,beta,theta]: angle to rotate by x, y, z axis.
+                fixed_point = center of rotation
+    '''
+    # input image should be a 3D ndarray
+    # use center of mass of the top layer as center of rotation
+    z_o = int(image.shape[0]/2)
+    y_o, x_o = center_of_mass(image[z_o])
+    fixed_point = np.array([x_o,y_o,z_o])
+
+    # moving point is the center of mass of the bottom
+    y_m, x_m = center_of_mass(image[0])
+    moving_point = np.array([x_m, y_m, 0])
+
+    fixed_vector = [0,0,-1] #fixed vector is z-axis
+    x, y, z = moving_point-fixed_point # target vector
+
+    alpha = -y/math.fabs(y)*(math.acos(z/math.sqrt(y**2+z**2))-math.pi)
+    beta = -x/math.fabs(x)*math.asin(x/math.sqrt(x**2+y**2+z**2))
+    theta = 0
+    # three euler angle of rotation respectively about the X, Y and Z axis
+    return fixed_point, [alpha,beta,theta]
+
+def Rotate_by_Euler_angles(image):
+    
+    center, angles = z_axis_alignment(image)
+    rigid_euler = sitk.Euler3DTransform()
+    rigid_euler.SetCenter(center)
+    rigid_euler.SetRotation(*angles)
+    image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
+    image=sitk.Resample(image,image,rigid_euler,sitk.sitkLinear,0.0,sitk.sitkFloat32)
+    
+    return sitk.GetArrayFromImage(image)
+

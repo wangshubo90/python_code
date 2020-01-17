@@ -31,10 +31,10 @@ def splitLRTF(folder,imgtitle,outfd = None):
             os.mkdir(fd)
     logging.info("start splitting")
 
-    left_tibia = img[150:(mid_idx-50),125:-125,0:-911]
-    right_tibia = img[-150:(mid_idx+50):-1,125:-125,0:-911]
-    left_femur = img[150:(mid_idx-50),125:-125,-1011:-1]
-    right_femur = img[-150:(mid_idx+50):-1,125:-125,-1011:-1]
+    left_tibia = auto_crop(Rotate_by_Euler_angles(img[150:(mid_idx-50), : ,0:-911]))
+    right_tibia = auto_crop(Rotate_by_Euler_angles(img[-150:(mid_idx+50):-1, : ,0:-911]))
+    left_femur = auto_crop(Rotate_by_Euler_angles(img[150:(mid_idx-50), : ,-911:-1]))
+    right_femur = auto_crop(Rotate_by_Euler_angles(img[-150:(mid_idx+50):-1, : ,911:-1]))
 
     # use multiple threads to accelerate writng images to disk.
     # create an iterable to be passed to imreadseq(img,fd,title)
@@ -52,8 +52,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del img,left_tibia,right_tibia,left_femur,right_femur
 
 if __name__ == "__main__":
-    masterfolder = '/media/spl/D/MicroCT data/Yoda1-loading/Reconstruction week 0'
-    masterout = '/media/spl/D/MicroCT data/Yoda1-loading/Tibia & Femur Rec week 0'
+    masterfolder = '/media/spl/D/MicroCT data/Yoda1-loading/Reconstruction week 4'
+    masterout = '/media/spl/D/MicroCT data/Yoda1-loading/Tibia & Femur Rec week 4'
     time1 = time.time()
     count = 0
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
 
-    for folder in sorted(os.listdir(masterfolder)[2:4]):
+    for folder in sorted(os.listdir(masterfolder)[0:4]):
         count += 1
         ID = os.path.basename(folder)[0:10]
         logging.info('Cropping for {} started.'.format(ID))

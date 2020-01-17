@@ -25,8 +25,8 @@ for file in sorted(os.listdir(masterdir))[1:]:
         #reftitle = file.replace('week 3','week 0')+' registered'
         #ref_img = imreadseq(os.path.join(refdir,reftitle))
         
-        tar_img = imreadseq_multithread(os.path.join(masterdir,file),rmbckgrd=60)
-        tar_img = tar_img[75:-250,0:-200,:] # femur
+        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False，rmbckgrd=60)
+        tar_img = sitk.GetImageFromArray(auto_crop(tar_img)) # femur
         
         ini_transform = cent_transform(ref_img,tar_img)
         metric_values = []

@@ -1,40 +1,25 @@
 import os
 from shubow_tools import imreadseq_multithread as imread
+import shubow_tools
+from shubow_tools import auto_crop
 import numpy as np 
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
+from scipy.ndimage.measurements import center_of_mass
+import math
 
-path = 'C:\\Users\\wangs\\Documents\\MicroCT data\\309 week 1 left tibia ref'
-image = imread(path,sitkimg=False,rmbckgrd=60)
-plt.set_cmap('inferno')
-def auto_crop(image):
-    image = np.array(image.max(axis=0) > 120, dtype=np.int)
-    ylen, xlen = image.shape
+if __name__ == "__main__":
+    path = '/media/spl/D/MicroCT data/Yoda1-loading/Femur week 0/401_week_0 left femur'
+    image = imread(path,sitkimg=False,rmbckgrd=60)
+    plt.set_cmap('inferno')
 
-    xbin = image.max(axis = 0)
-    ybin = image.max(axis = 1)
-    
-    np.where(xbin==1)
-
-
-    '''
-    fig , ax =plt.subplots(1,2)
-    
-    ax[0].plot(range(xlen),xbin)
-    ax[0].set_title("xbin")
-    ax[1].plot(ybin,range(ylen))
-    ax[1].set_title("ybin")
-
-    fig2,hist = plt.subplots(2,1)
-    hist[0].hist(xbin,bins = 20)
-    hist[0].set_title("xbin")
-    hist[1].hist(ybin,bins = 20)
-    hist[1].set_title("ybin")
-    '''
-    return image[:,xl:-xr,yl:-yr]
-
-find_edge(image)
-plt.figure()
-plt.imshow(image.max(axis=0))
+    image_original = image
+    image = shubow_tools.Euler3DRotate(image)
+    fig, ax = plt.subplots(2,1,figsize = (10,20))
+    ax[0].imshow(auto_crop(image).max(axis=0))
+    ax[0].set_title('z-axis aligned')
+    #ax[0].plot(*zip(*map(lambda x:center_of_mass(x),image)),'b-.-')
+    ax[1].imshow(auto_crop(image_original).max(axis=0))
+    ax[1].set_title('Original')
 
 

@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\wangs\\Documents\\mlenv\\sitk\\scripts",
+    "python.pythonPath": "/home/spl/ml/sitk/bin/python",
     "python.venvPath": "C:\\Users\\wangs\\Documents\\mlenv",
     "python.venvFolders": [
         "C:\\Users\\wangs\\Documents\\mlenv",
