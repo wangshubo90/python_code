@@ -7,7 +7,7 @@ from Across_limb_registration import *
 import os
 import re
 import logging
-from shubow_tools import imreadseq_multithread
+from shubow_tools import imreadseq_multithread,auto_crop, Rotate_by_Euler_angles
 
 ref_img = imreadseq_multithread('/media/spl/D/MicroCT data/MicroCT registration ref/dist_femur_ref/VOI',rmbckgrd=60)
 ref_img = ref_img[:,:,:800]
@@ -24,9 +24,9 @@ for file in sorted(os.listdir(masterdir))[1:]:
         logging.info('Loading image of {} ...'.format(imgtitle))
         #reftitle = file.replace('week 3','week 0')+' registered'
         #ref_img = imreadseq(os.path.join(refdir,reftitle))
-        
-        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False，rmbckgrd=60)
-        tar_img = sitk.GetImageFromArray(auto_crop(tar_img)) # femur
+        logging.info('Preprocessing ...')
+        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False, rmbckgrd=60)
+        tar_img = sitk.GetImageFromArray(auto_crop(Rotate_by_Euler_angles(tar_img))) # femur
         
         ini_transform = cent_transform(ref_img,tar_img)
         metric_values = []

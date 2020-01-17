@@ -119,14 +119,15 @@ def z_axis_alignment(image):
     # three euler angle of rotation respectively about the X, Y and Z axis
     return fixed_point, [alpha,beta,theta]
 
-def Rotate_by_Euler_angles(image):
+def Rotate_by_Euler_angles(image,*arg):
     
-    center, angles = z_axis_alignment(image)
+    center,angles = z_axis_alignment(image)
     rigid_euler = sitk.Euler3DTransform()
     rigid_euler.SetCenter(center)
     rigid_euler.SetRotation(*angles)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
-    image=sitk.Resample(image,image,rigid_euler,sitk.sitkLinear,0.0,sitk.sitkFloat32)
-    
-    return sitk.GetArrayFromImage(image)
+    image=sitk.Resample(image,image,rigid_euler,sitk.sitkLinear,0.0,sitk.sitkUInt8)
+    image = sitk.GetArrayFromImage(image)
+    return image
+
 
