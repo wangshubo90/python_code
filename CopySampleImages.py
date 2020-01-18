@@ -9,13 +9,19 @@ sampledir = os.path.join(masterdir,'sampleImg')
 
 if not os.path.exists(sampledir):
     os.mkdir(sampledir)
+else:
+    shutil.rmtree(sampledir)
+    os.mkdir(sampledir)
 
 failed = [] # use this one to output a list of failed registration
 
 for folder in os.listdir(masterdir):
 
     if 'week' in folder:
-        images = sorted(glob.glob(os.path.join(masterdir,folder,'*00*.tif')))
+        images = [] 
+        for ext in ['.png','.tif','.bmp']:
+            images.extend(glob.glob(os.path.join(masterdir,folder,'*00*'+ext)))
+        images.sort()
         try:
             distal=images[0]
             midline = images[-303]

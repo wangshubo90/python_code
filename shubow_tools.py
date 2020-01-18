@@ -82,10 +82,10 @@ def auto_crop(image,background=120):
     yl,*w,yr = np.where(ybin > int(0.03*xlen))[0]
 
     # if close to edges already, set as edges
-    xl = max(0,xl-10)
-    xr = min(xr+10,xlen)
-    yl = max(0,yl-10)
-    yr = min(yr+10,ylen)
+    xl = max(0,xl-20)
+    xr = min(xr+20,xlen)
+    yl = max(0,yl-20)
+    yr = min(yr+20,ylen)
 
     return image[:,yl:yr,xl:xr]
 
@@ -101,11 +101,12 @@ def z_axis_alignment(image):
                 fixed_point = center of rotation
     '''
     # input image should be a 3D ndarray
-    # use center of mass of the top layer as center of rotation
-    z_o = int(image.shape[0]/2)
+    # center of rotation somewhere in the middle, like z*0.5,z*0.75
+    z_o = int(image.shape[0]*0.5)
     y_o, x_o = center_of_mass(image[z_o])
     fixed_point = np.array([x_o,y_o,z_o])
-
+    translation = (fixed_point-[image.shape[2]/2,image.shape[1]/2,z_o])
+ 
     # moving point is the center of mass of the bottom
     y_m, x_m = center_of_mass(image[0])
     moving_point = np.array([x_m, y_m, 0])
@@ -117,14 +118,15 @@ def z_axis_alignment(image):
     beta = -x/math.fabs(x)*math.asin(x/math.sqrt(x**2+y**2+z**2))
     theta = 0
     # three euler angle of rotation respectively about the X, Y and Z axis
-    return fixed_point, [alpha,beta,theta]
+    return fixed_point, [alpha,beta,theta],translation,
 
 def Rotate_by_Euler_angles(image,*arg):
     
-    center,angles = z_axis_alignment(image)
+    center,angles,translation = z_axis_alignment(image)
     rigid_euler = sitk.Euler3DTransform()
     rigid_euler.SetCenter(center)
     rigid_euler.SetRotation(*angles)
+    rigid_euler.SetTranslation(translation)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
     image=sitk.Resample(image,image,rigid_euler,sitk.sitkLinear,0.0,sitk.sitkUInt8)
     image = sitk.GetArrayFromImage(image)
