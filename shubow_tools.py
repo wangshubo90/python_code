@@ -96,39 +96,58 @@ def z_axis_alignment(image):
                         in the middle of z-axis
                     2. find the center of mass of the bottom image
                     3. calculate Euler angles to rotate the object
+                    4.
     Parameter: image: ndarray
     Returns: [alpha,beta,theta]: angle to rotate by x, y, z axis.
                 fixed_point = center of rotation
+    Note: as image is in the form of np.ndarray, indexing of image.shape is in the order of z,y,x
+            however, the actual rotation and resampling will be done using simpleITK in which indexing of image.GetSize()
+            is in the order of x,y,z. Thus outputs are all in the order of x, y, z.
     '''
     # input image should be a 3D ndarray
-    # center of rotation somewhere in the middle, like z*0.5,z*0.75
-    z_o = int(image.shape[0]*0.5)
+    z_o = int(image.shape[0]*0.5)   # center of rotation somewhere in the middle, like z*0.5
     y_o, x_o = center_of_mass(image[z_o])
-    fixed_point = np.array([x_o,y_o,z_o])
-    translation = (fixed_point-[image.shape[2]/2,image.shape[1]/2,z_o])
+    cent_rotation = np.array([x_o,y_o,z_o])
  
     # moving point is the center of mass of the bottom
     y_m, x_m = center_of_mass(image[0])
     moving_point = np.array([x_m, y_m, 0])
-
-    fixed_vector = [0,0,-1] #fixed vector is z-axis
-    x, y, z = moving_point-fixed_point # target vector
-
+    #fixed vector is z-axis
+    #fixed_vector = [0,0,-1] 
+    # moving vector which will be rotated to align with fixed vector
+    x, y, z = moving_point-cent_rotation 
+    # three euler angle of rotation respectively about the X, Y and Z axis
     alpha = -y/math.fabs(y)*(math.acos(z/math.sqrt(y**2+z**2))-math.pi)
     beta = -x/math.fabs(x)*math.asin(x/math.sqrt(x**2+y**2+z**2))
     theta = 0
-    # three euler angle of rotation respectively about the X, Y and Z axis
-    return fixed_point, [alpha,beta,theta],translation,
-
-def Rotate_by_Euler_angles(image,*arg):
     
+    # figure a translation to move the object to the center of a resampling grid
+    mv_vector_norm = math.sqrt(x**2+y**2+z**2) # this is the length of the moving vector
+    translation = cent_rotation-[image.shape[2]/2,image.shape[1]/2, mv_vector_norm]
+
+    return cent_rotation, [alpha,beta,theta],translation
+
+def Rotate_by_Euler_angles(image):
+    '''
+    Description: rotate a 3d image using simpleITK transformation to align
+                    the object with z-axis. The original orientation is defined
+                    by a vector from center of mass (COM) of the image(z=z_max/2)
+                    to COM of the image(z=0) 
+    parameter(s): image, ndarray
+    return(s)   : image, ndarray
+    '''
     center,angles,translation = z_axis_alignment(image)
     rigid_euler = sitk.Euler3DTransform()
     rigid_euler.SetCenter(center)
     rigid_euler.SetRotation(*angles)
     rigid_euler.SetTranslation(translation)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
-    image=sitk.Resample(image,image,rigid_euler,sitk.sitkLinear,0.0,sitk.sitkUInt8)
+    resample_size = [image.GetSize()[0],image.GetSize()[1],image.GetSize()[2]+int(abs(translation[2])*2)]
+    resample_origin = image.GetOrigin()
+    resample_spacing = image.GetSpacing()
+    resample_direction = image.GetDirection()
+    image=sitk.Resample(image,resample_size,rigid_euler,sitk.sitkLinear,
+                        resample_origin, resample_spacing, resample_direction,sitk.sitkUInt8)
     image = sitk.GetArrayFromImage(image)
     return image
 

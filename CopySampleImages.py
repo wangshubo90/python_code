@@ -3,8 +3,14 @@
 import os
 import shutil
 import glob
+import sys
+from pathlib import Path
 
-masterdir = os.getcwd()
+if len(sys.argv) == 1:
+    masterdir = os.getcwd()
+else:
+    masterdir = Path(sys.argv[1])
+
 sampledir = os.path.join(masterdir,'sampleImg')
 
 if not os.path.exists(sampledir):
