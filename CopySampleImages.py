@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 if len(sys.argv) == 1:
-    masterdir = os.getcwd()
+    masterdir = Path.cwd()
 else:
     masterdir = Path(sys.argv[1])
 

@@ -10,7 +10,7 @@ import math
 
 if __name__ == "__main__":
     path = r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\week 0 femur\411 week 0 right femur'
-    image = imread(path,sitkimg=False,rmbckgrd=60)
+    image = imread(path,sitkimg=False,rmbckgrd=60,z_range=[0,100])
     image_original = image
     image = Rotate_by_Euler_angles(image)
     fig, ax = plt.subplots(2,1,figsize = (10,20))

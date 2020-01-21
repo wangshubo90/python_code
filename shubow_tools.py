@@ -6,7 +6,7 @@ import numpy as np
 import skimage
 from skimage import io
 import SimpleITK as sitk
-import cv2
+from cv2 import imread
 import matplotlib.pyplot as plt
 import datetime
 import re
@@ -15,16 +15,22 @@ import glob
 from scipy.ndimage.measurements import center_of_mass
 import math
 
-def imreadseq(fdpath,sitkimg=True,rmbckgrd = None) :
+def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
-    
-    for image in sorted(os.listdir(fdpath)):
-        if re.search(r"(00\d{4,6})",image):
-            simage = cv2.imread(os.path.join(fdpath,image),0)
-            if not rmbckgrd is None:
-                mask = simage > rmbckgrd
-                simage = simage * mask
-            images.append(simage)
+
+    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6})",image)]
+    if z_range is None:
+        z_down, z_up = [0,len(imglist)]
+    else:
+        z_down,z_up = z_range
+    imglist=imglist[z_down:z_up]
+
+    for image in sorted(os.listdir(fdpath))[z_down:z_up]:
+        simage = imread(os.path.join(fdpath,image),0)
+        if not rmbckgrd is None:
+            mask = simage > rmbckgrd
+            simage = simage * mask
+        images.append(simage)
     images = np.asarray(images)
 
     if sitkimg == True:
@@ -41,13 +47,17 @@ def imsaveseq(images,fdpath,imgtitle, sitkimages=True):
     #   skimage.io.imsave(os.path.join(outputsubdir,'{} {:0>6}.tif'.format(folder, (i+1))),newimage)
 
 def imreadgrey(imagepath):
-    image_at_z=cv2.imread(imagepath,0)
+    image_at_z=imread(imagepath,0)
     return image_at_z
 
-def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None):
+def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None):
     images = []
-    imglist = [p for p in glob.glob(os.path.join(fdpath,"*")) if re.search(r"(00\d{4,6})",p)]
-    imglist = sorted(imglist)
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6})",p)]
+    if z_range is None:
+        z_down, z_up = [0,len(imglist)]
+    else:
+        z_down, z_up = z_range
+    imglist=imglist[z_down:z_up]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = thread) as executor:
         for idx,image in enumerate(executor.map(imreadgrey,imglist)):

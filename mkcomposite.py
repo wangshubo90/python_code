@@ -12,6 +12,7 @@ import glob
 import re
 import logging
 import concurrent.futures
+from pathlib import Path
 
 
 def extractmsk(img,mask):
@@ -22,6 +23,13 @@ def extractmsk(img,mask):
     return img
     
 def mkcomposite(refimg, tarimg, mask = None):
+    '''
+    Desciption:
+    Parameters: refimg, ndarray with dimension = 3
+                tarimg, ndarray with the shape as refimg
+                mask, ndarray with the same shape as refimg. Default value is None.
+    Returns:    comp, ndarray with the shape as refimg
+    '''
     if not mask is None:
         [refimg, tarimg] = [extractmsk(img,mask) for img in [refimg,tarimg]]
     else:
@@ -64,9 +72,9 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered femur '+ref)
-    tarimgmasterdir = os.path.join('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg','Registered femur '+tar)
-    outputmasterdir = os.path.join(tarimgmasterdir,'..','femur w{}w{}composite'.format(ref[-1],tar[-1]))
+    refimgmasterdir = Path('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg') / str('Registered tibia '+ref)
+    tarimgmasterdir = Path('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg') / str('Registered tibia '+tar)
+    outputmasterdir = os.path.join(tarimgmasterdir,'..','tibia w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
