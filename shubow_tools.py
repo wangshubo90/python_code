@@ -74,10 +74,10 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
 
 def auto_crop(image,background=120):
     '''
-    Description: this function shrint the frame of x-y plane of a 3D image
-                 in the form of ndarray. Z-axis is not changed.
-    Parameters: image: ndarray
-                background: int, default value 120
+    Description: this function shrint the frame in x-y plane of a 3D image. 
+                        Z-axis is not changed.
+    Parameters: image: 3D, np.array
+                background: int, default value 120, to be used to remove noise
     Returns:    image: ndarray
     '''
     # make a z-project as in ImageJ
@@ -106,10 +106,12 @@ def z_axis_alignment(image):
                         in the middle of z-axis
                     2. find the center of mass of the bottom image
                     3. calculate Euler angles to rotate the object
-                    4.
-    Parameter: image: ndarray
-    Returns: [alpha,beta,theta]: angle to rotate by x, y, z axis.
-                fixed_point = center of rotation
+                    4. determine a translation that takes the object to the center of resampling grid
+    Parameter:  image: 3D np.array
+    Returns:    cent_rotation : [x, y, z] 1D np.array, center of rotation
+                [alpha,beta,theta]: [alpha, beta, gamma] 1D np.array, angles to rotate by x, y, z axis.
+                translation = [x, y ,z]] 1D np.array, translation vector that takes the object to the center
+
     Note: as image is in the form of np.ndarray, indexing of image.shape is in the order of z,y,x
             however, the actual rotation and resampling will be done using simpleITK in which indexing of image.GetSize()
             is in the order of x,y,z. Thus outputs are all in the order of x, y, z.
@@ -152,6 +154,7 @@ def Rotate_by_Euler_angles(image):
     rigid_euler.SetRotation(*angles)
     rigid_euler.SetTranslation(translation)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
+    # determine resampling grid size
     resample_size = [image.GetSize()[0],image.GetSize()[1],image.GetSize()[2]+int(abs(translation[2])*2)]
     resample_origin = image.GetOrigin()
     resample_spacing = image.GetSpacing()
