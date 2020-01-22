@@ -6,7 +6,7 @@ import numpy as np
 import skimage
 from skimage import io
 import SimpleITK as sitk
-from cv2 import imread
+from cv2 import imread #pylint: disable=no-name-in-module
 import matplotlib.pyplot as plt
 import datetime
 import re
@@ -60,7 +60,7 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
     imglist=imglist[z_down:z_up]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = thread) as executor:
-        for idx,image in enumerate(executor.map(imreadgrey,imglist)):
+        for _, image in enumerate(executor.map(imreadgrey,imglist)):
             if not rmbckgrd is None:
                 image = image * (image > rmbckgrd)
             
@@ -83,13 +83,13 @@ def auto_crop(image,background=120):
     # make a z-project as in ImageJ
     zstack = np.array(image.max(axis=0) > background, dtype = 'int')
 
-    ylen, xlen = zstack.shape
+    ylen, xlen = zstack.shape #pylint:disable=unpacking-non-sequence
 
     xbin = zstack.sum(axis = 0)
     ybin = zstack.sum(axis = 1)
 
-    xl,*w,xr = np.where(xbin > int(0.03*ylen))[0]  # note : np.where() returns a tuple not a ndarray
-    yl,*w,yr = np.where(ybin > int(0.03*xlen))[0]
+    xl,*_, xr = np.where(xbin > int(0.03*ylen))[0]  # note : np.where() returns a tuple not a ndarray
+    yl,*_, yr = np.where(ybin > int(0.03*xlen))[0]
 
     # if close to edges already, set as edges
     xl = max(0,xl-20)
