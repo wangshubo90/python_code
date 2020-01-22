@@ -3,11 +3,11 @@
 # -*- coding: utf-8 -*-
 
 import SimpleITK as sitk
-from Across_limb_registration import *
+from Across_limb_registration import reg_transform, cent_transform
 import os
 import re
 import logging
-from shubow_tools import Rotate_by_Euler_angles,auto_crop
+from shubow_tools import imreadseq_multithread,imsaveseq, Rotate_by_Euler_angles,auto_crop
 
 #ref_img = imreadseq('/media/spl/D/MicroCT data/MicroCT registration ref/whole_tibia_ref',rmbckgrd=60)
 #ref_img = imreadseq('/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg/Registered tibia week 0/416 week 0 left tibia registered')
@@ -27,8 +27,8 @@ for file in sorted(os.listdir(masterdir))[0:1]:
 
         logging.info('Loading image of {} ...'.format(imgtitle))
         reftitle = file.replace('week 3','week 0')+' registered'
-        ref_img = imreadseq(os.path.join(refdir,reftitle))
-        tar_img = imreadseq(os.path.join(masterdir,file),sitkimg=False)
+        ref_img = imreadseq_multithread(os.path.join(refdir,reftitle))
+        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False)
         tar_img = sitk.GetImageFromArray(auto_crop(Rotate_by_Euler_angles(tar_img[125:1100])))
         
         ini_transform = cent_transform(ref_img,tar_img)

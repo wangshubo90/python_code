@@ -72,8 +72,8 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = Path('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg') / str('Registered tibia '+ref)
-    tarimgmasterdir = Path('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg') / str('Registered tibia '+tar)
+    refimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+tar) #pylint: disable=anomalous-backslash-in-string
     outputmasterdir = os.path.join(tarimgmasterdir,'..','tibia w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
