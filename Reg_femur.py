@@ -19,8 +19,8 @@ format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
 for file in sorted(os.listdir(masterdir)):
-    #if re.search(r'410.*right femur',file):
-    if re.search(r'\d{3} week \d (left|right) femur',file):
+    if re.search(r'416.*left femur',file):
+    #if re.search(r'\d{3} week \d (left|right) femur',file):
         imgtitle = file[0:-11]
         logging.info('Loading image of {} ...'.format(imgtitle))
         reftitle = imgtitle.replace('week 3','week 0')+' registered'

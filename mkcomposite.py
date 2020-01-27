@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 
 from shubow_tools import imreadseq, imsaveseq
-import os, sys
+import os
 import SimpleITK as sitk
 import numpy as np
 import multiprocessing
@@ -49,7 +49,9 @@ def mkcomposite(refimg, tarimg, mask = None):
     return comp
 
 def batch_mkcomp(tardir,outputmasterdir,mask = None):
-    logging.info('Thread started for %s',os.path.basename(tardir))
+    format = "%(asctime)s: %(message)s"
+    logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
+    logging.info('Thread started for {}'.format(os.path.basename(tardir)))
     pat = re.compile(r'week \d')
     refdir = re.sub(pat,"week 0",tardir,count = 3)
     refimg = imreadseq(refdir,sitkimg=False)

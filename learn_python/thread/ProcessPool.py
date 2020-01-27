@@ -30,7 +30,7 @@ def is_prime(n):
     return True
 
 def main():
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
         for idx,obj in enumerate(zip(PRIMES, executor.map(is_prime, PRIMES))):
             number,prime = obj
             print('%s: %d is prime: %s' % (idx,number, prime))
