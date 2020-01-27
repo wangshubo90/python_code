@@ -9,8 +9,8 @@ from scipy.ndimage.measurements import center_of_mass
 import math
 
 if __name__ == "__main__":
-    path = r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\week 0 femur\411 week 0 right femur'
-    image = imread(path,sitkimg=False,rmbckgrd=60,z_range=[0,100])
+    path = r'/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg/week 0 femur/416 week 0 left femur'
+    image = imread(path,sitkimg=False,rmbckgrd=60)
     image_original = image
     image = Rotate_by_Euler_angles(image)
     fig, ax = plt.subplots(2,1,figsize = (10,20))
@@ -20,6 +20,7 @@ if __name__ == "__main__":
     #ax[0].plot(*zip(*map(lambda x:center_of_mass(x),image)),'b-.-')
     ax[1].imshow(auto_crop(image_original).max(axis=0))
     ax[1].set_title('Original')
-    plt.show()
+    plt.savefig('/home/spl/autocrop_femur.png')
+
 
 

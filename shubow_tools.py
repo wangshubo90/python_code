@@ -18,7 +18,11 @@ import math
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
+<<<<<<< HEAD
     imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|png|jmp)",p)]
+=======
+    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
+>>>>>>> upstream/master
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
@@ -52,11 +56,12 @@ def imreadgrey(imagepath):
 
 def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None):
     images = []
-    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6})",p)]
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|tiff|png|jmp)",p)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
         z_down, z_up = z_range
+
     imglist=imglist[z_down:z_up]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = thread) as executor:
@@ -74,10 +79,10 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
 
 def auto_crop(image,background=120):
     '''
-    Description: this function shrint the frame of x-y plane of a 3D image
-                 in the form of ndarray. Z-axis is not changed.
-    Parameters: image: ndarray
-                background: int, default value 120
+    Description: this function shrint the frame in x-y plane of a 3D image. 
+                        Z-axis is not changed.
+    Parameters: image: 3D, np.array
+                background: int, default value 120, to be used to remove noise
     Returns:    image: ndarray
     '''
     # make a z-project as in ImageJ
@@ -88,8 +93,8 @@ def auto_crop(image,background=120):
     xbin = zstack.sum(axis = 0)
     ybin = zstack.sum(axis = 1)
 
-    xl,*_, xr = np.where(xbin > int(0.03*ylen))[0]  # note : np.where() returns a tuple not a ndarray
-    yl,*_, yr = np.where(ybin > int(0.03*xlen))[0]
+    xl,*_, xr = np.where(xbin > int(0.02*ylen))[0]  # note : np.where() returns a tuple not a ndarray
+    yl,*_, yr = np.where(ybin > int(0.02*xlen))[0]
 
     # if close to edges already, set as edges
     xl = max(0,xl-20)
@@ -106,10 +111,12 @@ def z_axis_alignment(image):
                         in the middle of z-axis
                     2. find the center of mass of the bottom image
                     3. calculate Euler angles to rotate the object
-                    4.
-    Parameter: image: ndarray
-    Returns: [alpha,beta,theta]: angle to rotate by x, y, z axis.
-                fixed_point = center of rotation
+                    4. determine a translation that takes the object to the center of resampling grid
+    Parameter:  image: 3D np.array
+    Returns:    cent_rotation : [x, y, z] 1D np.array, center of rotation
+                [alpha,beta,theta]: [alpha, beta, gamma] 1D np.array, angles to rotate by x, y, z axis.
+                translation = [x, y ,z]] 1D np.array, translation vector that takes the object to the center
+
     Note: as image is in the form of np.ndarray, indexing of image.shape is in the order of z,y,x
             however, the actual rotation and resampling will be done using simpleITK in which indexing of image.GetSize()
             is in the order of x,y,z. Thus outputs are all in the order of x, y, z.
@@ -152,6 +159,7 @@ def Rotate_by_Euler_angles(image):
     rigid_euler.SetRotation(*angles)
     rigid_euler.SetTranslation(translation)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
+    # determine resampling grid size
     resample_size = [image.GetSize()[0],image.GetSize()[1],image.GetSize()[2]+int(abs(translation[2])*2)]
     resample_origin = image.GetOrigin()
     resample_spacing = image.GetSpacing()
