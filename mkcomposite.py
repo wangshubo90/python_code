@@ -6,7 +6,6 @@ from shubow_tools import imreadseq, imsaveseq
 import os, sys
 import SimpleITK as sitk
 import numpy as np
-from joblib import Parallel,delayed
 import multiprocessing
 import glob
 import re
@@ -72,9 +71,9 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+ref) #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(tarimgmasterdir,'..','tibia w{}w{}composite'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered femur '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered femur '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(tarimgmasterdir,'..','femur w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
@@ -106,8 +105,10 @@ if __name__ == "__main__":
     tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
     compdirls = [outputmasterdir]*len(tardirls)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
-        executor.map(batch_mkcomp,tardirls,compdirls)
+    for tardir,comdir in zip(tardirls,compdirls):
+        batch_mkcomp(tardir,comdir)
+    #with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
+    #   executor.map(batch_mkcomp,tardirls,compdirls)
 
         '''for a, b in zip(tardirls,compdirls):
             executor.submit(batch_mkcomp,a,b)'''

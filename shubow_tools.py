@@ -18,14 +18,15 @@ import math
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
-    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
+    imglist = [image for image in glob.glob(os.path.join(fdpath,'*')) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
         z_down,z_up = z_range
+
     imglist=imglist[z_down:z_up]
 
-    for image in sorted(os.listdir(fdpath))[z_down:z_up]:
+    for image in imglist:
         simage = imread(os.path.join(fdpath,image),0)
         if not rmbckgrd is None:
             mask = simage > rmbckgrd
@@ -37,13 +38,19 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
         images = sitk.GetImageFromArray(images)
     return images
 
-def imsaveseq(images,fdpath,imgtitle, sitkimages=True):
+def imsaveseq(images,fdpath,imgtitle, sitkimages=True, idx_start=None):
     if sitkimages ==True:
         images = sitk.GetArrayFromImage(images)
     len = images.shape[0]
+
+    if idx_start is None:
+        idx_start = 1
+    else:
+        pass
+
     for i in range(len):
         newimage = images[i,:,:].astype('uint8')
-        skimage.io.imsave(os.path.join(fdpath,imgtitle+'%7.6d.tif' %(i+1)),newimage,check_contrast=False)
+        skimage.io.imsave(os.path.join(fdpath,imgtitle+'%7.6d.tif' %(i+idx_start)),newimage,check_contrast=False)
     #   skimage.io.imsave(os.path.join(outputsubdir,'{} {:0>6}.tif'.format(folder, (i+1))),newimage)
 
 def imreadgrey(imagepath):
