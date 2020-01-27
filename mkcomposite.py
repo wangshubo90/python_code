@@ -49,8 +49,8 @@ def mkcomposite(refimg, tarimg, mask = None):
     return comp
 
 def batch_mkcomp(tardir,outputmasterdir,mask = None):
-    logging.info('Thread started for {}'.format(os.path.basename(tardir)))
-    pat = re.compile(r'week \d?')
+    logging.info('Thread started for %s',os.path.basename(tardir))
+    pat = re.compile(r'week \d')
     refdir = re.sub(pat,"week 0",tardir,count = 3)
     refimg = imreadseq(refdir,sitkimg=False)
     tarimg = imreadseq(tardir,sitkimg=False)
@@ -78,40 +78,16 @@ if __name__ == "__main__":
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
 
-    '''
-    fdlist = []
-    for folder in os.listdir(tarimgmasterdir):
-        if not folder[:3] in [str(x) for x in range(410,415)]:
-            fdlist.append(folder)
-    '''
-    '''
-    # we parallel the for loop by multiprocessing
-    num_cores = multiprocessing.cpu_count()
-    results = Parallel(n_jobs=num_cores)(delayed(batch_mkcomp)(os.path.join(tarimgmasterdir,i),outputmasterdir) 
-                        for i in sorted(os.listdir(tarimgmasterdir))) 
-
-    # original for loop
-    '''
-
-    '''
-    for tardir in sorted(os.listdir(tarimgmasterdir)):
-        tardir = os.path.join(tarimgmasterdir,tardir)
-        try:
-            batch_mkcomp(tardir,outputmasterdir)
-        except Exception:
-            print('Mkcomposite for {} failed'.format(os.path.basename(tardir)))
-            pass
-    '''
     tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
     compdirls = [outputmasterdir]*len(tardirls)
 
-    for tardir,comdir in zip(tardirls,compdirls):
-        batch_mkcomp(tardir,comdir)
-    #with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
-    #   executor.map(batch_mkcomp,tardirls,compdirls)
-
-        '''for a, b in zip(tardirls,compdirls):
-            executor.submit(batch_mkcomp,a,b)'''
+    with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
+        logging.info('ProcessPool started')
+        executor.map(batch_mkcomp,tardirls,compdirls)
+        #for i in range(len(compdirls)):
+        #    executor.submit(lambda:batch_mkcomp(tardirls[i],compdirls[i]))
+        #for a, b in zip(tardirls,compdirls):
+        #    executor.submit(batch_mkcomp,a,b)
 
     logging.info('Done!')
     
