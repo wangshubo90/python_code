@@ -19,10 +19,14 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|png|jmp)",p)]
 =======
     imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
 >>>>>>> upstream/master
+=======
+    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
+>>>>>>> de9989a40a687b69be94330eea214c15dcf967bb
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
