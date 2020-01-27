@@ -150,7 +150,7 @@ if __name__ == "__main__":
             #ini_transform = sitk.ReadTransform(os.path.join(suboutput,folder+'reg_transform.tfm'))
         
             try:
-                tar_reg, tar_reg_transform = reg_transform(Reference_img,tar_img,ini_transform, folder)
+                tar_reg, tar_reg_transform = reg_transform(Reference_img,tar_img,ini_transform,folder,suboutput)
                 print('Registration of {} is completed. Saving...'.format(folder))
                 imsaveseq(tar_reg, folder, suboutput)
                 sitk.WriteTransform(tar_reg_transform,os.path.join(suboutput,folder+'reg_transform.tfm'))

@@ -18,15 +18,15 @@ import math
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
-    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6})",image)]
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|png|jmp)",p)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
-        z_down,z_up = z_range
+        z_down, z_up = z_range
     imglist=imglist[z_down:z_up]
 
-    for image in sorted(os.listdir(fdpath))[z_down:z_up]:
-        simage = imread(os.path.join(fdpath,image),0)
+    for image in imglist:
+        simage = imread(image,0)
         if not rmbckgrd is None:
             mask = simage > rmbckgrd
             simage = simage * mask
