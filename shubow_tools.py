@@ -18,7 +18,8 @@ import math
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
-    imglist = [image for image in sorted(glob.glob(os.path.join(fdpath,'*'))) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
+    imglist = [image for image in sorted(glob.glob(os.path.join(fdpath,'*'))) 
+                if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
