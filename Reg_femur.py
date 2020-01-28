@@ -9,30 +9,30 @@ import re
 import logging
 from shubow_tools import imreadseq_multithread,auto_crop, Rotate_by_Euler_angles
 
-ref_img = imreadseq_multithread('/media/spl/D/MicroCT data/MicroCT registration ref/dist_femur_ref/VOI',rmbckgrd=60)
-ref_img = ref_img[:,:,:800]
-masterdir = '/media/spl/D/MicroCT data/Yoda1-loading/Femur week 0'
-#refdir = os.path.join(masterdir,'..','Registered femur week 0')
+#ref_img = imreadseq_multithread('/media/spl/D/MicroCT data/MicroCT registration ref/dist_femur_ref/VOI',rmbckgrd=60)
+wkdir = r'/media/spl/D/MicroCT data/Yoda1 11.13.2019/Tibia Femur fully seg'
+masterdir = os.path.join(wkdir,'week 3 femur')
+masteroutput = os.path.join(wkdir,'VOI_Registered femur week 3')
+refdir = os.path.join(wkdir,'Registered femur week 0')
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
-for file in sorted(os.listdir(masterdir))[1:]:
-    if file.endswith("femur"):
+for file in sorted(os.listdir(masterdir)):
+    if re.search(r'\d{3} week \d (left|right) femur',file):
     # if re.search(r'\d{3} week \d (left|right) femur',file):
         imgtitle = file
         logging.info('Loading image of {} ...'.format(imgtitle))
-        #reftitle = file.replace('week 3','week 0')+' registered'
-        #ref_img = imreadseq(os.path.join(refdir,reftitle))
-        logging.info('Preprocessing ...')
-        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False, rmbckgrd=60)
+        reftitle = file.replace('week 3','week 0')+' registered'
+        ref_img = imreadseq_multithread(os.path.join(refdir,reftitle),z_range=[450,590])
+        tar_img = imreadseq_multithread(os.path.join(masterdir,file),sitkimg=False,z_range=[420,620], rmbckgrd=60)
         tar_img = sitk.GetImageFromArray(auto_crop(Rotate_by_Euler_angles(tar_img))) # femur
         
         ini_transform = cent_transform(ref_img,tar_img)
         metric_values = []
         multires_iterations = []
 
-        suboutput = os.path.join(masterdir,'..','Registered femur week 0',imgtitle+" registered")
+        suboutput = os.path.join(masteroutput,imgtitle+" registered")
 
         logging.info('Registration of {} is in process...'.format(imgtitle))
         try:

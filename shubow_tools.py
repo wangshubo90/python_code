@@ -18,7 +18,7 @@ import math
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
     images = []
 
-    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6})",image)]
+    imglist = [image for image in sorted(os.listdir(fdpath)) if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
@@ -52,11 +52,12 @@ def imreadgrey(imagepath):
 
 def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None):
     images = []
-    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6})",p)]
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|tiff|png|jmp)",p)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
         z_down, z_up = z_range
+
     imglist=imglist[z_down:z_up]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = thread) as executor:
@@ -88,8 +89,8 @@ def auto_crop(image,background=120):
     xbin = zstack.sum(axis = 0)
     ybin = zstack.sum(axis = 1)
 
-    xl,*_, xr = np.where(xbin > int(0.03*ylen))[0]  # note : np.where() returns a tuple not a ndarray
-    yl,*_, yr = np.where(ybin > int(0.03*xlen))[0]
+    xl,*_, xr = np.where(xbin > int(0.02*ylen))[0]  # note : np.where() returns a tuple not a ndarray
+    yl,*_, yr = np.where(ybin > int(0.02*xlen))[0]
 
     # if close to edges already, set as edges
     xl = max(0,xl-20)
