@@ -1,11 +1,11 @@
 {
-    "python.pythonPath": "C:\\Users\\wangs\\Documents\\mlenv\\sitk\\Scripts\\python.exe",
-    "python.venvPath": "C:\\Users\\wangs\\Documents\\mlenv",
+    "python.pythonPath": "C:\\Users\\wangs\\Documents\\pythonenv\\sitk\\Scripts\\python.exe",
     "python.venvFolders": [
         "C:\\Users\\wangs\\Documents\\mlenv",
-        "C:\\Users\\wangs\\Documents\\mlenv\\media\\scripts",
-        "C:\\Users\\wangs\\Documents\\mlenv\\sitk\\scripts",
-        "C:\\Users\\wangs\\Documents\\mlenv\\tf20\\scripts"
+        "C:\\Users\\wangs\\Documents\\mlenv\\media",
+        "C:\\Users\\wangs\\Documents\\mlenv\\sitk",
+        "C:\\Users\\wangs\\Documents\\mlenv\\tf20",
+        "C:\\Users\\wangs\\Documents\\pythonenv\\sitk\\scripts"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true

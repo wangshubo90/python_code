@@ -8,7 +8,7 @@ import os
 import re
 
 
-os.chdir(r'C:\Users\wangs\Desktop\Yoda1 small batch')
+os.chdir(r'E:\CTan analysis\Yoda1 small batch')
 
 def read_ctan(file): 
     df = pd.read_csv(file,sep=",", header =1,
