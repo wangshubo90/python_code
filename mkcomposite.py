@@ -13,7 +13,6 @@ import logging
 import concurrent.futures
 from pathlib import Path
 
-
 def extractmsk(img,mask):
     
     mask = np.where(mask>0,1,0)
@@ -64,7 +63,6 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     imsaveseq(composite,outdir,comptitle,sitkimages=False,idx_start=450)
     logging.info('Thread finished for '+comptitle)
 
-
 if __name__ == "__main__":
 
     format = "%(asctime)s: %(message)s"
@@ -87,4 +85,3 @@ if __name__ == "__main__":
         executor.map(batch_mkcomp,tardirls,compdirls)
 
     logging.info('Done!')
-    
