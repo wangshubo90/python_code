@@ -68,7 +68,7 @@ def imreadgrey(imagepath):
 
 def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None):
     images = []
-    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|tiff|png|jmp)",p)]
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r".*(tif|tiff|png|jmp)",p)] #(00\d{4,6})
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
