@@ -1,12 +1,13 @@
 {
-    "python.pythonPath": "/home/spl/ml/sitk/bin/python",
+    "python.pythonPath": "C:\\Users\\wangs\\Documents\\MLenv\\simpleitk\\Scripts\\python.exe",
     "python.venvFolders": [
         "C:\\Users\\wangs\\Documents\\mlenv",
         "C:\\Users\\wangs\\Documents\\mlenv\\media",
         "C:\\Users\\wangs\\Documents\\mlenv\\sitk",
         "C:\\Users\\wangs\\Documents\\mlenv\\tf20",
         "C:\\Users\\wangs\\Documents\\pythonenv\\sitk\\scripts",
-        "\\home\\spl\\ml\\sitk"
+        "\\home\\spl\\ml\\sitk",
+        "C:\\Users\\wangs\\Documents\\MLenv\\simpleitk"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true
