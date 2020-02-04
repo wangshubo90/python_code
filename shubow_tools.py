@@ -15,11 +15,16 @@ import glob
 from scipy.ndimage.measurements import center_of_mass
 import math
 
-def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
+def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=None) :
     images = []
 
+    if seq_pattern is None:
+        seq_pattern = re.compile(r"(00.*\d{4,6}).(tif|bmp|png)$")
+    else:
+        pass
+
     imglist = [image for image in sorted(glob.glob(os.path.join(fdpath,'*'))) 
-                if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
+                if seq_pattern.search(image)]
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
@@ -33,6 +38,7 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None) :
         z_down, z_up = [0,len(imglist)]
     else:
         z_down, z_up = z_range
+        
     imglist=imglist[z_down:z_up]
 
     for image in imglist:
@@ -66,9 +72,16 @@ def imreadgrey(imagepath):
     image_at_z=imread(imagepath,0)
     return image_at_z
 
-def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None):
+def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None,seq_pattern=None):
     images = []
-    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if re.search(r"(00\d{4,6}).*(tif|tiff|png|jmp)",p)] #
+
+    if seq_pattern is None:
+        seq_pattern = re.compile(r"(00.*\d{4,6}).(tif|bmp|png)$")
+    else:
+        pass
+
+    imglist = [p for p in sorted(glob.glob(os.path.join(fdpath,"*"))) if seq_pattern.search(p)] #
+
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
     else:
