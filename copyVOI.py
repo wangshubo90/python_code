@@ -33,7 +33,7 @@ def cp_VOI_batch(master_fd,master_dst,z_range):
         cp_VOI(os.path.join(master_fd,folder),os.path.join(master_dst,folder),z_range)
 
 if __name__ == "__main__":
-    fd = r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\tibia w0w3composite_40-840'
-    dst_fd = r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\tibia w0w3composite_724-774'
+    fd = r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\tibia w0w3composite_40-840_thred75'
+    dst_fd = r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg\tibia w0w3composite_724-774_thred75'
 
     cp_VOI_batch(fd,dst_fd,[724,774])
