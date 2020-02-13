@@ -50,18 +50,20 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
     logging.info('Thread--{}--started'.format(os.path.basename(tardir)))
+    tarwk = re.search(r"week (\d)",tardir)
     refdir = tardir.replace("week 3","week 0",-1)
+    tartitle = os.path.basename(tardir)
     logging.info('Thread--{}--mkdir'.format(os.path.basename(tardir)))
+    comptitle = tartitle[:-11] + ' w{}w{}composite'.format(0,tarwk.group(1))
     outdir = os.path.join(outputmasterdir,comptitle)
-
+    
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     refimg = imreadseq(refdir,sitkimg=False)
     tarimg = imreadseq(tardir,sitkimg=False)
-    tartitle = os.path.basename(tardir)
-
+    
     composite = mkcomposite(refimg,tarimg,mask=mask)
-    comptitle = tartitle[:-11] + ' w{}w{}composite'.format(ref[-1],tar[-1])
+    
     imsaveseq(composite,outdir,comptitle,sitkimages=False,idx_start=450)
     logging.info('Thread finished for '+comptitle)
 
@@ -72,9 +74,9 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+ref) #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join('E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(tarimgmasterdir,'..','femur w{}w{}composite_450-590_reg_thred75'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join(r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join(r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(r'E:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','femur w{}w{}composite_450-590_reg_thred75'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
