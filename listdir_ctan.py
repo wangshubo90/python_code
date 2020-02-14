@@ -20,7 +20,7 @@ if os.path.exists(ctan_list):
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
-logging.info("File saved as {}".format(ctan_list))
+
 #method 1
 with open(ctan_list,'a') as thefile:
     thefile.write('[Dataset list]\n')
@@ -32,7 +32,8 @@ with open(ctan_list,'a') as thefile:
             thefile.write('File={:s}\n'.format(file))
             thefile.write('{:s}\n'.format(info))
             i=i+1
-
+            
+logging.info("File saved as {}".format(ctan_list))
 '''
 #method 2
 w = open(ctan_list,'a')
@@ -63,7 +64,5 @@ w = open(ctan_list,'w')
 w.writelines(ctan)
 w.close()
 '''
-
-print('Done!')
 
 

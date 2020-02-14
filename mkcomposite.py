@@ -27,6 +27,11 @@ def mkcomposite(refimg, tarimg, mask = None):
                 tarimg, ndarray with the shape as refimg
                 mask, ndarray with the same shape as refimg. Default value is None.
     Returns:    comp, ndarray with the shape as refimg
+    Note:
+                tar only 120-0+120 = 240
+                ref only 0-60+120 = 60
+                tar-ref overlavp = 120-60+120 = 180
+                background = 0-0+120 = 120  -->> 0
     '''
     if not mask is None:
         [refimg, tarimg] = [extractmsk(img,mask) for img in [refimg,tarimg]]
@@ -35,12 +40,7 @@ def mkcomposite(refimg, tarimg, mask = None):
 
     refimg = np.where(refimg>75,60,0)
     tarimg = np.where(tarimg>75,120,0)
-    ''' 
-    tar only 120-0+120 = 240
-    ref only 0-60+120 = 60
-    tar-ref overlavp = 120-60+120 = 180
-    background = 0-0+120 = 120  -->> 0
-    '''
+    
     comp = tarimg - refimg +120 
     comp = np.where(comp==120,0,comp) 
     comp.astype(np.uint8) 
@@ -59,12 +59,12 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    refimg = imreadseq(refdir,sitkimg=False)
-    tarimg = imreadseq(tardir,sitkimg=False)
+    refimg = imreadseq(refdir,sitkimg=False,rmbckgrd=75)
+    tarimg = imreadseq(tardir,sitkimg=False,rmbckgrd=75)
     
     composite = mkcomposite(refimg,tarimg,mask=mask)
     
-    imsaveseq(composite,outdir,comptitle,sitkimages=False)
+    imsaveseq(composite,outdir,comptitle,sitkimages=False,idx_start=451)
     logging.info('Thread finished for '+comptitle)
 
 if __name__ == "__main__":
@@ -74,9 +74,9 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+ref) #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','Registered tibia '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','tibia w{}w{}composite_40-840_thred75'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+ref+"_thred75") #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','femur w{}w{}composite_450-590_thred75'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
