@@ -147,7 +147,7 @@ def z_axis_alignment(image):
             is in the order of x,y,z. Thus outputs are all in the order of x, y, z.
     '''
     # input image should be a 3D ndarray
-    z_o = int(image.shape[0]*0.5)   # center of rotation somewhere in the middle, like z*0.5
+    z_o = int(image.shape[0]*0.75)   # center of rotation somewhere in the middle, like z*0.5
     y_o, x_o = center_of_mass(image[z_o])
     cent_rotation = np.array([x_o,y_o,z_o])
  
@@ -185,7 +185,7 @@ def Rotate_by_Euler_angles(image):
     rigid_euler.SetTranslation(translation)
     image=sitk.Cast(sitk.GetImageFromArray(image),sitk.sitkFloat32)
     # determine resampling grid size
-    resample_size = [image.GetSize()[0],image.GetSize()[1],image.GetSize()[2]+int(abs(translation[2])*2)]
+    resample_size = [image.GetSize()[0],image.GetSize()[1],image.GetSize()[2]+int(abs(translation[2]))]
     resample_origin = image.GetOrigin()
     resample_spacing = image.GetSpacing()
     resample_direction = image.GetDirection()
