@@ -16,6 +16,15 @@ from scipy.ndimage.measurements import center_of_mass
 import math
 
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=None) :
+    '''
+    Description: Read 2d image seqeunces
+    Parameters: 
+                fdpath: string, dir path
+                sitkimg: binary, whether convert to sitk image object.
+                rmbckgrd: int[0-255], remove pixels below a threshold
+                z_range: list or ndarray with 2 elements indecating the lower and upper bound
+    Returns: 3d ndarray / sitk image object
+    '''
     images = []
 
     if seq_pattern is None:
