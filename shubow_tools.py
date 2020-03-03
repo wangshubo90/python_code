@@ -17,7 +17,7 @@ import math
 
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=None) :
     '''
-    Description: Read 2d image seqeunces
+    Description: Read 2d image seqeunces as sitk image or ndarray
     Parameters: 
                 fdpath: string, dir path
                 sitkimg: binary, whether convert to sitk image object.
@@ -34,14 +34,6 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=No
 
     imglist = [image for image in sorted(glob.glob(os.path.join(fdpath,'*'))) 
                 if seq_pattern.search(image)]
-    if z_range is None:
-        z_down, z_up = [0,len(imglist)]
-    else:
-        z_down,z_up = z_range
-    imglist=imglist[z_down:z_up]
-
-    for image in imglist:
-        simage = imread(os.path.join(fdpath,image),0)
 
     if z_range is None:
         z_down, z_up = [0,len(imglist)]
@@ -142,8 +134,8 @@ def z_axis_alignment(image):
     '''
     Description: adjust the orientation of the object by the following steps:
                     1. find the center of mass of the image 
-                        in the middle of z-axis
-                    2. find the center of mass of the bottom image
+                        at the middle of z-axis
+                    2. find the center of mass of the bottom
                     3. calculate Euler angles to rotate the object
                     4. determine a translation that takes the object to the center of resampling grid
     Parameter:  image: 3D np.array
@@ -204,3 +196,22 @@ def Rotate_by_Euler_angles(image):
     return image
 
 
+def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
+    '''
+    Description:
+        Use sitk.Resample method to extract an image with lower resolution
+    Args:
+        tar_img: sitk.Image
+        down_scale_factor:  float/double, 
+    Returns:
+        sitk.Image
+    '''
+
+    dimension = sitk.Image.GetDimension(tar_img)
+    idt_transform = sitk.Transform(dimension,sitk.sitkIdentity)
+    resample_size = [int(i/down_scale_factor) for i in sitk.Image.GetSize(tar_img)]
+    resample_spacing = [i*down_scale_factor for i in sitk.Image.GetSpacing(tar_img)]
+    resample_origin = sitk.Image.GetOrigin(tar_img)
+    new_img = sitk.Resample(sitk.Cast(tar_img,sitk.sitkFloat32),resample_size, idt_transform, sitk.sitkLinear,
+                     resample_origin,resample_spacing,resample_direction,new_dtype)
+    return new_img
