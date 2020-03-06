@@ -212,6 +212,8 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     resample_size = [int(i/down_scale_factor) for i in sitk.Image.GetSize(tar_img)]
     resample_spacing = [i*down_scale_factor for i in sitk.Image.GetSpacing(tar_img)]
     resample_origin = sitk.Image.GetOrigin(tar_img)
+    resample_direction = sitk.Image.GetDirection(tar_img)
     new_img = sitk.Resample(sitk.Cast(tar_img,sitk.sitkFloat32),resample_size, idt_transform, sitk.sitkLinear,
                      resample_origin,resample_spacing,resample_direction,new_dtype)
+                     
     return new_img
