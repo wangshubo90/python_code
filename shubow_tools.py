@@ -195,6 +195,27 @@ def Rotate_by_Euler_angles(image):
     image = sitk.GetArrayFromImage(image)
     return image
 
+def Find_orientation(image,threshold):
+    '''
+    Desription: find the eigen vectors of a 2D image by PCA
+    Args: 
+            Image: 2d np.array, 
+            threshold: int
+    Returns: 
+            eigein_vec1: 1d array with two elements
+            eigein_vec2: 1d array with two elements
+            note: corresponding eigein_value1 > eigein_value2
+    '''
+    x, y = np.nonzero(image>threshold)
+    x = x - np.mean(x)
+    y = y - np.mean(y)
+    coords = np.vstack([x, y])
+    cov = np.cov(coords)
+    evals, evecs = np.linalg.eig(cov)
+    sort_indices = np.argsort(evals)[::-1]
+
+    return evecs[:, sort_indices[0]], evecs[:, sort_indices[1]]
+
 
 def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     '''
