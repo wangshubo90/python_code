@@ -74,6 +74,9 @@ def imreadgrey(imagepath):
     return image_at_z
 
 def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_range=None,seq_pattern=None):
+    '''
+    
+    '''
     images = []
 
     if seq_pattern is None:
@@ -199,13 +202,18 @@ def Find_orientation(image,threshold):
     '''
     Desription: find the eigen vectors of a 2D image by PCA
     Args: 
-            Image: 2d np.array, 
+            Image: 2d np.ndarray / sitk.Image()
             threshold: int
     Returns: 
             eigein_vec1: 1d array with two elements
             eigein_vec2: 1d array with two elements
             note: corresponding eigein_value1 > eigein_value2
     '''
+    if type(tar_img) == sitk.Image:
+        tar_img = sitk.GetArrayFromImage(tar_img)
+    elif type(tar_img) == np.ndarray:
+        pass
+
     x, y = np.nonzero(image>threshold)
     x = x - np.mean(x)
     y = y - np.mean(y)
@@ -222,11 +230,13 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     Description:
         Use sitk.Resample method to extract an image with lower resolution
     Args:
-        tar_img: sitk.Image
+        tar_img: sitk.Image / numpy.ndarray
         down_scale_factor:  float/double, 
     Returns:
         sitk.Image
     '''
+    if type(tar_img) == np.ndarray:
+        tar_img = sitk.GetImageFromArray(tar_img)
 
     dimension = sitk.Image.GetDimension(tar_img)
     idt_transform = sitk.Transform(dimension,sitk.sitkIdentity)
@@ -236,5 +246,6 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     resample_direction = sitk.Image.GetDirection(tar_img)
     new_img = sitk.Resample(sitk.Cast(tar_img,sitk.sitkFloat32),resample_size, idt_transform, sitk.sitkLinear,
                      resample_origin,resample_spacing,resample_direction,new_dtype)
-                     
+    new_img = sitk.Cast(new_imag,new_dtype)
+
     return new_img
