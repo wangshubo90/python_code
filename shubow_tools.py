@@ -198,31 +198,29 @@ def Rotate_by_Euler_angles(image):
     image = sitk.GetArrayFromImage(image)
     return image
 
-def Find_orientation(image,threshold):
+def PCA(image,threshold):
     '''
     Desription: find the eigen vectors of a 2D image by PCA
     Args: 
             Image: 2d np.ndarray / sitk.Image()
             threshold: int
     Returns: 
-            eigein_vec1: 1d array with two elements
-            eigein_vec2: 1d array with two elements
-            note: corresponding eigein_value1 > eigein_value2
+            eigein_vectors: ndarray, each row is a eigein vector
+            note: corresponding eigein_values in descending order
     '''
-    if type(tar_img) == sitk.Image:
-        tar_img = sitk.GetArrayFromImage(tar_img)
-    elif type(tar_img) == np.ndarray:
+    if type(image) == sitk.Image:
+        image = sitk.GetArrayFromImage(tar_img)
+    elif type(image) == np.ndarray:
         pass
 
-    x, y = np.nonzero(image>threshold)
-    x = x - np.mean(x)
-    y = y - np.mean(y)
-    coords = np.vstack([x, y])
-    cov = np.cov(coords)
+    coords = np.vstack(np.nonzero(image>threshold))
+    center = coords.mean(axis=1)
+    centered_coords = np.subtract(coords,center.reshape(-1,1))
+    cov = np.cov(centered_coords)
     evals, evecs = np.linalg.eig(cov)
     sort_indices = np.argsort(evals)[::-1]
 
-    return evecs[:, sort_indices[0]], evecs[:, sort_indices[1]]
+    return np.transpose(evecs[:, sort_indices])
 
 
 def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
@@ -246,6 +244,6 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     resample_direction = sitk.Image.GetDirection(tar_img)
     new_img = sitk.Resample(sitk.Cast(tar_img,sitk.sitkFloat32),resample_size, idt_transform, sitk.sitkLinear,
                      resample_origin,resample_spacing,resample_direction,new_dtype)
-    new_img = sitk.Cast(new_imag,new_dtype)
+    new_img = sitk.Cast(new_img,new_dtype)
 
     return new_img
