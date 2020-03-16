@@ -203,9 +203,11 @@ def PCA(image,threshold):
     Desription: find the eigen vectors of a 2D image by PCA
     Args: 
             Image: 2d np.ndarray / sitk.Image()
-            threshold: int
+            threshold: int, a grey value threshold to create a binary image.
     Returns: 
-            eigein_vectors: ndarray, each row is a eigein vector
+            evals: ndarray, each element is a eigein value with descending order
+            evecs: ndarray, each row is a eigein vector
+            center: ndarray, the center 
             note: corresponding eigein_values in descending order
     '''
     if type(image) == sitk.Image:
@@ -219,8 +221,8 @@ def PCA(image,threshold):
     cov = np.cov(centered_coords)
     evals, evecs = np.linalg.eig(cov)
     sort_indices = np.argsort(evals)[::-1]
-
-    return np.transpose(evecs[:, sort_indices])
+    evecs = np.transpose(evecs[:, sort_indices])
+    return evals[sort_indices], evecs, center
 
 
 def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
@@ -247,3 +249,30 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     new_img = sitk.Cast(new_img,new_dtype)
 
     return new_img
+
+def Find_Rotation_Matrix(mv_coord, ref_coord):
+    '''
+    Description:
+        Given two coordinates, find a rotation matrix that transform mv_coord to ref_coord
+    Arg(s):
+        mv_coord: ndarray, dimension = 3
+        ref_coord: ndarray, dimension = 3
+    Return(s):
+        rotation_matrix: ndarray, a rotation matrix that transforms a 3d vector
+    '''
+
+    def direction_cosine(vect1,vect2):
+
+        return np.dot(vect1,vect2)/(np.linalg.norm(vect1)*np.linalg.norm(vect2))
+    
+    assert (mv_coord.shape == ref_coord.shape and mv_coord.shape[0] == mv_coord.shape[1]), "mv_coord and ref_coord need to square matrices with the same dimension!"
+    
+    dim = mv_coord.shape[0]
+    rotation_matrix = np.zeros((dim,dim))
+
+    for i in range(dim):
+
+        for j in range(dim):
+            rotation_matrix[i,j] =direction_cosine(mv_coord[i],ref_coord[j]) 
+    
+    return rotation_matrix
