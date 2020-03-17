@@ -211,12 +211,12 @@ def PCA(image,threshold):
             note: corresponding eigein_values in descending order
     '''
     if type(image) == sitk.Image:
-        image = sitk.GetArrayFromImage(tar_img)
+        image = sitk.GetArrayFromImage(image)
     elif type(image) == np.ndarray:
         pass
 
     coords = np.vstack(np.nonzero(image>threshold))
-    center = coords.mean(axis=1)
+    center = coords.mean(axis=1,dtype=np.float64)
     centered_coords = np.subtract(coords,center.reshape(-1,1))
     cov = np.cov(centered_coords)
     evals, evecs = np.linalg.eig(cov)
