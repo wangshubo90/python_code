@@ -173,7 +173,7 @@ def z_axis_alignment(image):
 
     return cent_rotation, [alpha,beta,theta],translation
 
-def Rotate_by_Euler_angles(image):
+def rotate_by_euler_angles(image):
     '''
     Description: rotate a 3d image using simpleITK transformation to align
                     the object with z-axis. The original orientation is defined
@@ -198,7 +198,7 @@ def Rotate_by_Euler_angles(image):
     image = sitk.GetArrayFromImage(image)
     return image
 
-def PCA(image,threshold):
+def PCA(image,threshold = 90):
     '''
     Desription: find the eigen vectors of a 2D image by PCA
     Args: 
@@ -215,13 +215,14 @@ def PCA(image,threshold):
     elif type(image) == np.ndarray:
         pass
 
-    coords = np.vstack(np.nonzero(image>threshold))
-    center = coords.mean(axis=1,dtype=np.float64)
-    centered_coords = np.subtract(coords,center.reshape(-1,1))
-    cov = np.cov(centered_coords)
-    evals, evecs = np.linalg.eig(cov)
+    coords = np.vstack(np.nonzero(image>threshold)) # get coordinates
+    center = coords.mean(axis=1,dtype=np.float64)   # get center
+    centered_coords = np.subtract(coords,center.reshape(-1,1))  # get centered coordinates
+    cov = np.cov(centered_coords)   # get covariance matrix
+    evals, evecs = np.linalg.eig(cov)   
     sort_indices = np.argsort(evals)[::-1]
     evecs = np.transpose(evecs[:, sort_indices])
+
     return evals[sort_indices], evecs, center
 
 
@@ -250,7 +251,7 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
 
     return new_img
 
-def Find_Rotation_Matrix(mv_coord, ref_coord):
+def rotation_matrix(mv_coord, ref_coord):
     '''
     Description:
         Given two coordinates, find a rotation matrix that transform mv_coord to ref_coord
@@ -271,8 +272,35 @@ def Find_Rotation_Matrix(mv_coord, ref_coord):
     rotation_matrix = np.zeros((dim,dim))
 
     for i in range(dim):
-
         for j in range(dim):
             rotation_matrix[i,j] =direction_cosine(mv_coord[i],ref_coord[j]) 
     
     return rotation_matrix
+
+def init_transform_PCA(tar_img, ref_img):
+    '''
+    Description:
+        This function use PCA to find a rotation matrix that transform the tar_img to ref_img.
+        sitk.Euler2DTransform or sitk.Euler3DTransform will be used.
+    Args:
+        tar_img: np.ndarray or sitk.Image
+        ref_img: np.ndarray or sitk.Image
+    Returns: 
+        sitk.Transfrom(): an sitk.Transform object that can be used in registration or resampling
+    '''
+
+    eval_tar, evec_tar, center_tar = PCA(tar_img)
+    _, evec_ref, center_ref = PCA(ref_img)
+
+    if len(eval_tar) == 2:
+        transform = sitk.Euler2DTransform()
+    elif len(eval_tar) == 3:
+        transform = sitk.Euler3DTransform()
+    
+    matrix = rotation_matrix(evec_tar, evec_ref)
+
+    transform.SetCenter(center_tar) # this is the rotation center
+    transform.SetMatrix(matrix.flatten()) # SetMatrix() take input as tuple or 1d-array
+    transform.SetTranslation(center_ref-center_tar) 
+
+    return transform
