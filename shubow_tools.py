@@ -14,6 +14,7 @@ import concurrent.futures
 import glob
 from scipy.ndimage.measurements import center_of_mass
 import math
+from ipywidgets import interact, fixed #, IntSlider, interactive_output
 
 def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=None) :
     '''
@@ -200,14 +201,14 @@ def rotate_by_euler_angles(image):
 
 def PCA(image,threshold = 90):
     '''
-    Desription: find the eigen vectors of a 2D image by PCA
+    Desription: find the eigen vectors of a 2D image by PCA. 
     Args: 
             Image: 2d np.ndarray / sitk.Image()
             threshold: int, a grey value threshold to create a binary image.
     Returns: 
             evals: ndarray, each element is a eigein value with descending order
-            evecs: ndarray, each row is a eigein vector
-            center: ndarray, the center 
+            evecs: ndarray, each column is a eigein vector
+            center: ndarray, the center [x, y, z] of the image after thresholding
             note: corresponding eigein_values in descending order
     '''
     if type(image) == sitk.Image:
@@ -215,15 +216,14 @@ def PCA(image,threshold = 90):
     elif type(image) == np.ndarray:
         pass
 
-    coords = np.vstack(np.nonzero(image>threshold)) # get coordinates
+    coords = np.flip(np.vstack(np.nonzero(image>threshold)),axis = 0) # get coordinates
     center = coords.mean(axis=1,dtype=np.float64)   # get center
     centered_coords = np.subtract(coords,center.reshape(-1,1))  # get centered coordinates
     cov = np.cov(centered_coords)   # get covariance matrix
     evals, evecs = np.linalg.eig(cov)   
     sort_indices = np.argsort(evals)[::-1]
-    evecs = np.transpose(evecs[:, sort_indices])
 
-    return evals[sort_indices], evecs, center
+    return evals[sort_indices], evecs[:, sort_indices], center
 
 
 def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
@@ -269,13 +269,13 @@ def rotation_matrix(mv_coord, ref_coord):
     assert (mv_coord.shape == ref_coord.shape and mv_coord.shape[0] == mv_coord.shape[1]), "mv_coord and ref_coord need to square matrices with the same dimension!"
     
     dim = mv_coord.shape[0]
-    rotation_matrix = np.zeros((dim,dim))
+    _matrix = np.zeros((dim,dim))
 
     for i in range(dim):
         for j in range(dim):
-            rotation_matrix[i,j] =direction_cosine(mv_coord[i],ref_coord[j]) 
+            _matrix[i,j] =direction_cosine(mv_coord[j],ref_coord[i]) 
     
-    return rotation_matrix
+    return _matrix.transpose()
 
 def init_transform_PCA(tar_img, ref_img):
     '''
@@ -297,10 +297,119 @@ def init_transform_PCA(tar_img, ref_img):
     elif len(eval_tar) == 3:
         transform = sitk.Euler3DTransform()
     
+    # the indexing oder is [x,y,z] in sitk and [z,y,x] in numpy. So we need to change it.
     matrix = rotation_matrix(evec_tar, evec_ref)
 
     transform.SetCenter(center_tar) # this is the rotation center
     transform.SetMatrix(matrix.flatten()) # SetMatrix() take input as tuple or 1d-array
-    transform.SetTranslation(center_ref-center_tar) 
+    transform.SetTranslation(center_tar-center_ref) 
 
     return transform
+
+def rotate_2D(center, angle):
+    '''
+    Description:
+        rotate a 2D image by an angle clockwisely
+    Args:
+        image: ndarray or sitk.Image
+        angle: float32, an angle in radian; for example, np.pi
+    Returns:
+        transfrom: sitk.transform
+    '''
+    transform = sitk.Euler2DTransform()
+    transform.SetCenter(center)
+    transform.SetAngle(angle)
+
+    return transform
+
+def resample_insitu(image,transform,interpolator = sitk.sitkLinear, sitkdtype=sitk.sitkFloat32):
+    
+    if type(image) == np.ndarray:
+        image = sitk.GetImageFromArray(image)
+    elif type(image) == sitk.Image:
+        pass
+
+    return sitk.Resample(image,image,transform,interpolator,sitkdtype)
+
+def show_images(*args,**kwds):
+    '''
+    Description: 
+        show multiple images simutaneously
+    Args:
+        *args: ndaray, multiple images in form of np.ndarray
+        *kwds: additional keywords are passed to plt.figure() call.
+    Return:
+        fig : plt.Figure
+        ax : plt.axes.Axes object or array of Axes objects. 
+    '''
+
+    n = len(args)
+    rows = int((n-1)/4)+1
+
+    if n < 4:
+        columns = n
+    else:
+        columns = 4
+
+    fig, ax = plt.subplots(rows,columns,**kwds)
+
+    for i in range(n):
+        evals, evecs, center = PCA(args[i])
+        x1=np.linspace(0,evecs[0,0]*200,200)+center[0]
+        y1=np.linspace(0,evecs[1,0]*200,200)+center[1]
+        x2=np.linspace(0,evecs[0,1]*200*evals[1]/evals[0],200)+center[0]
+        y2=np.linspace(0,evecs[1,1]*200*evals[1]/evals[0],200)+center[1]
+        ax[i].imshow(args[i],cmap=plt.cm.Greys_r)
+        ax[i].plot(x1, y1, 'red')
+        ax[i].plot(x2, y2, 'blue')
+        ax[i].axis("off")
+        ax[i].title("Image {}".format(i))
+
+    return fig, ax
+
+def interact_display(*args):
+    '''
+    Description:
+        Display multiple 3d images interactively
+    Args:
+        *args: ndarrays with np.dmin=3
+    '''
+    n = len(args)
+
+    kwds_z = {"img_z_"+str(i+1): (0,args[i].shape[0]-1) for i in range(n)} 
+    # the value is a tuple (start, stop) for ipywidgets.interact call
+    kwds_npa = {"img_"+str(i+1): fixed(args[i]) for i in range(n)} 
+    # the value is ipywidgets.fixed() for ipywidgets.interact call
+    kwds_input = dict(kwds_z, **kwds_npa)
+    # combine the two keys to be passed to display()
+
+    def display(**kwds):
+        
+        m=int(len(kwds)/2) # this is the number of images to be displayed.
+        key = list(kwds.keys()) # have to call list after Python3.7
+        rows = int((m-1)/3)+1 # 3 images per row.
+
+        if m < 3:
+            columns = m
+        else:
+            columns = 3
+
+        fig, ax = plt.subplots(rows,columns,figsize=(4*columns,3*rows))
+
+        if m ==1:
+            ax.imshow(kwds[key[0+m]][kwds[key[0]],:,:],cmap=plt.cm.Greys_r)
+            ax.axis("off")
+            ax.set_title("Image 1")
+        else:
+            for i in range(m):
+                z_interact = kwds[key[i]] # retrieve z_index from the dictionary
+                img = kwds[key[i+m]]    # retrieve img/np.array from the dictionary
+                ax[i].imshow(img[z_interact,:,:],cmap=plt.cm.Greys_r)
+                ax[i].set_title("Image {}".format(i))
+                ax[i].axis("off")
+        
+        fig.show()
+    
+    interact(display, **kwds_input)
+
+    
