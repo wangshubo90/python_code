@@ -108,7 +108,7 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/Reconstruction image/9.19.2018 heart week 3 reconstruction'
+    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/Reconstruction image/9.26.2018 heart week 4 reconstruction'
     masterout = r'/media/spl/D/MicroCT_data/Tibia and femur'
     time1 = time.time()
     count = 0
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
 
-    for folder in sorted(os.listdir(masterfolder))[6:]:
+    for folder in sorted(os.listdir(masterfolder))[1:]:
         count += 1
         ID = os.path.basename(folder)[0:10]
         logging.info('Cropping for {} started.'.format(ID))
