@@ -55,7 +55,8 @@ def LR_mid_x(image):
 
 def splitLRTF(folder,imgtitle,outfd = None):
     logging.info("Reading {}".format(imgtitle))
-    img = imreadseq_multithread(folder,sitkimg= False, rmbckgrd=60)
+    img = imreadseq_multithread(folder, sitkimg= False, rmbckgrd=60,thread=2)
+    logging.info("Processing...split LT & LF")
     width = img.shape[2]
     mid_idx = LR_mid_x(img)
 
@@ -81,7 +82,6 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del img
 
     ##### Save left tibia and femur #####
-    logging.info("Processing...split LT & LF")
     z_index_splt_left=knee_join_z_index(left)
     left_tibia = sitk.GetImageFromArray(auto_crop(left[:z_index_splt_left]))
     left_femur = sitk.GetImageFromArray(auto_crop(rotate_by_euler_angles(left[z_index_splt_left:])))
@@ -108,8 +108,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/Reconstruction image/9.26.2018 heart week 4 reconstruction'
-    masterout = r'/media/spl/D/MicroCT_data/Tibia and femur'
+    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/2nd batch reconstruction Sep-2018 4.0 N/9.7.2018 tibia week 1 reconstruction'
+    masterout = r'/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/2nd batch reconstruction Sep-2018 4.0 N/2nd batch LR tibia and femur'
     time1 = time.time()
     count = 0
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
 
-    for folder in sorted(os.listdir(masterfolder))[1:]:
+    for folder in sorted(os.listdir(masterfolder))[:]:
         count += 1
         ID = os.path.basename(folder)[0:10]
         logging.info('Cropping for {} started.'.format(ID))

@@ -29,7 +29,7 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=No
     images = []
 
     if seq_pattern is None:
-        seq_pattern = re.compile(r"(00.*\d{4,6}).(tif|bmp|png)$")
+        seq_pattern = re.compile(r"(00\d{4,6}).(tif|bmp|png)$")
     else:
         pass
 
@@ -81,7 +81,7 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
     images = []
 
     if seq_pattern is None:
-        seq_pattern = re.compile(r"(00.*\d{4,6}).(tif|bmp|png)$")
+        seq_pattern = re.compile(r"(00\d{4,6}).(tif|bmp|png)$")
     else:
         pass
 
