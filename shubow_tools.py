@@ -107,7 +107,7 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
 
     return images
 
-def auto_crop(image,background=120):
+def auto_crop(image,background=100):
     '''
     Description: this function shrint the frame in x-y plane of a 3D image. 
                         Z-axis is not changed.
@@ -115,13 +115,16 @@ def auto_crop(image,background=120):
                 background: int, default value 120, to be used to remove noise
     Returns:    image: ndarray
     '''
-    # make a z-project as in ImageJ
-    zstack = np.array(image.max(axis=0) > background, dtype = 'int')
+    if image.ndim == 3:
+        # make a z-project as in ImageJ
+        image2D = np.array(image.max(axis=0) > background, dtype = 'int')
+    else:
+        image2D = image
 
-    ylen, xlen = zstack.shape #pylint:disable=unpacking-non-sequence
+    ylen, xlen = image2D.shape #pylint:disable=unpacking-non-sequence
 
-    xbin = zstack.sum(axis = 0)
-    ybin = zstack.sum(axis = 1)
+    xbin = image2D.sum(axis = 0)
+    ybin = image2D.sum(axis = 1)
 
     xl,*_, xr = np.where(xbin > int(0.02*ylen))[0]  # note : np.where() returns a tuple not a ndarray
     yl,*_, yr = np.where(ybin > int(0.02*xlen))[0]

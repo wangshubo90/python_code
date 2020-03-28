@@ -9,12 +9,55 @@ import re
 import time
 import concurrent.futures
 import logging
+import cv2
+
+def knee_join_z_index(limb):
+    '''
+    Desription:
+        Given a 3D image of one limb, find the z_index to split tibia and femur
+    Args:
+        limb: ndarray, dimension = 3
+    return: 
+        z_index: integer
+    '''
+    # np.nonzero finds all (pixels>threshold)' index as a tuple
+    # np.vstack cancatenate the tuple elements and returns a ndarray
+    # np.std calculate standar deviation of x and y in each plane
+    index = [np.std(np.vstack(np.nonzero(i>80)), axis = 1) for i in limb]
+    # the sums up x^2 and y^2; this is the second order momentum / total numer of value
+    index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
+    z_index = np.argsort(index[1200:2500])[0]+1200
+
+    return z_index
+
+def LR_mid_x(image):
+    '''
+    Desription:
+        Given a 3D reconstruction, find the x_index to split left and right
+    Args:
+        limb: ndarray, dimension = 3
+    return: 
+        center: ndarray, 
+    '''       
+
+    z_project = image.mean(axis = 0)
+    xy_dex = np.vstack(np.nonzero(z_project))
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0) # kmeans parameters
+    k=2
+    attempts=15
+    ret, label, center = cv2.kmeans(np.float32(xy_dex.transpose()),k,
+                            None,criteria,attempts,cv2.KMEANS_PP_CENTERS)
+
+    mid_x_index = int(center[:, 1].sum()/2)
+
+    return mid_x_index
+
 
 def splitLRTF(folder,imgtitle,outfd = None):
     logging.info("Reading {}".format(imgtitle))
     img = imreadseq_multithread(folder,sitkimg= False, rmbckgrd=60)
     width = img.shape[2]
-    mid_idx = int(width/2)
+    mid_idx = LR_mid_x(img)
 
     if not outfd is None:
         pass
@@ -33,13 +76,15 @@ def splitLRTF(folder,imgtitle,outfd = None):
     titlelist = [imgtitle+' left tibia', imgtitle+' left femur',
                 imgtitle+' right tibia',imgtitle+' right femur']
     
+    left = auto_crop(img[:,:,:mid_idx])
+    right = auto_crop(img[:,:,-1:mid_idx:-1])
+    del img
+
     ##### Save left tibia and femur #####
-    logging.info("Splitting Left")
-    left =  auto_crop(Rotate_by_Euler_angles(img[:,:,:mid_idx]))
-    logging.info("Processing...")
-    z_index_splt_left=np.argmin((left.mean(axis=(1,2)))[1400:2100])+1400 
+    logging.info("Processing...split LT & LF")
+    z_index_splt_left=knee_join_z_index(left)
     left_tibia = sitk.GetImageFromArray(auto_crop(left[:z_index_splt_left]))
-    left_femur = sitk.GetImageFromArray(auto_crop(Rotate_by_Euler_angles(left[z_index_splt_left:])))
+    left_femur = sitk.GetImageFromArray(auto_crop(rotate_by_euler_angles(left[z_index_splt_left:])))
     del left
     # use multiple threads to accelerate writng images to disk.
     # create an iterable to be passed to imreadseq(img,fd,title)
@@ -50,12 +95,10 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del left_tibia,left_femur
     
     ##### Save right tibia and femur #####
-    logging.info("Splitting right")
-    right = auto_crop(Rotate_by_Euler_angles(img[:,:,-1:mid_idx:-1]))
-    logging.info("Processing...")
-    z_index_splt_right=np.argmin((right.mean(axis=(1,2)))[1400:2100])+1400
+    logging.info("Processing...split RT & RF")
+    z_index_splt_right=knee_join_z_index(right)
     right_tibia = sitk.GetImageFromArray(auto_crop(right[:z_index_splt_right]))
-    right_femur = sitk.GetImageFromArray(auto_crop(Rotate_by_Euler_angles(right[z_index_splt_right:])))
+    right_femur = sitk.GetImageFromArray(auto_crop(rotate_by_euler_angles(right[z_index_splt_right:])))
     del right
     imagelist = [right_tibia,right_femur]
     logging.info("Writing...")
@@ -65,8 +108,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/media/spl/Seagate MicroCT/Yoda1-tumor 1.24.2020/Reconstruction week 3'
-    masterout = r'/media/spl/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia femur split week 3'
+    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/Reconstruction image/9.19.2018 heart week 3 reconstruction'
+    masterout = r'/media/spl/D/MicroCT_data/Tibia and femur'
     time1 = time.time()
     count = 0
 
@@ -74,7 +117,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
 
-    for folder in sorted(os.listdir(masterfolder))[13:14]:
+    for folder in sorted(os.listdir(masterfolder))[6:]:
         count += 1
         ID = os.path.basename(folder)[0:10]
         logging.info('Cropping for {} started.'.format(ID))
