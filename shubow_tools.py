@@ -142,7 +142,7 @@ def z_axis_alignment(image):
                     2. find the center of mass of the bottom
                     3. calculate Euler angles to rotate the object
                     4. determine a translation that takes the object to the center of resampling grid
-    Parameter:  image: 3D np.array
+    Args:  image: 3D np.array
     Returns:    cent_rotation : [x, y, z] 1D np.array, center of rotation
                 [alpha,beta,theta]: [alpha, beta, gamma] 1D np.array, angles to rotate by x, y, z axis.
                 translation = [x, y ,z]] 1D np.array, translation vector that takes the object to the center
@@ -180,7 +180,7 @@ def rotate_by_euler_angles(image):
                     the object with z-axis. The original orientation is defined
                     by a vector from center of mass (COM) of the image(z=z_max/2)
                     to COM of the image(z=0) 
-    parameter(s): image, ndarray
+    Args: image, ndarray
     return(s)   : image, ndarray
     '''
     center,angles,translation = z_axis_alignment(image)
@@ -198,33 +198,6 @@ def rotate_by_euler_angles(image):
                         resample_origin, resample_spacing, resample_direction,sitk.sitkUInt8)
     image = sitk.GetArrayFromImage(image)
     return image
-
-def PCA(image,threshold = 90):
-    '''
-    Desription: find the eigen vectors of a 2D image by PCA. 
-    Args: 
-            Image: 2d np.ndarray / sitk.Image()
-            threshold: int, a grey value threshold to create a binary image.
-    Returns: 
-            evals: ndarray, each element is a eigein value with descending order
-            evecs: ndarray, each column is a eigein vector
-            center: ndarray, the center [x, y, z] of the image after thresholding
-            note: corresponding eigein_values in descending order
-    '''
-    if type(image) == sitk.Image:
-        image = sitk.GetArrayFromImage(image)
-    elif type(image) == np.ndarray:
-        pass
-
-    coords = np.flip(np.vstack(np.nonzero(image>threshold)),axis = 0) # get coordinates
-    center = coords.mean(axis=1,dtype=np.float64)   # get center
-    centered_coords = np.subtract(coords,center.reshape(-1,1))  # get centered coordinates
-    cov = np.cov(centered_coords)   # get covariance matrix
-    evals, evecs = np.linalg.eig(cov)   
-    sort_indices = np.argsort(evals)[::-1]
-
-    return evals[sort_indices], evecs[:, sort_indices], center
-
 
 def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     '''
@@ -250,86 +223,6 @@ def down_scale(tar_img,down_scale_factor=1.0,new_dtype=sitk.sitkFloat32):
     new_img = sitk.Cast(new_img,new_dtype)
 
     return new_img
-
-def rotation_matrix(mv_coord, ref_coord):
-    '''
-    Description:
-        Given two coordinates, find a rotation matrix that transform mv_coord to ref_coord
-    Arg(s):
-        mv_coord: ndarray, dimension = 3
-        ref_coord: ndarray, dimension = 3
-    Return(s):
-        rotation_matrix: ndarray, a rotation matrix that transforms a 3d vector
-    '''
-
-    def direction_cosine(vect1,vect2):
-
-        return np.dot(vect1,vect2)/(np.linalg.norm(vect1)*np.linalg.norm(vect2))
-    
-    assert (mv_coord.shape == ref_coord.shape and mv_coord.shape[0] == mv_coord.shape[1]), "mv_coord and ref_coord need to square matrices with the same dimension!"
-    
-    dim = mv_coord.shape[0]
-    _matrix = np.zeros((dim,dim))
-
-    for i in range(dim):
-        for j in range(dim):
-            _matrix[i,j] =direction_cosine(mv_coord[j],ref_coord[i]) 
-    
-    return _matrix.transpose()
-
-def init_transform_PCA(tar_img, ref_img):
-    '''
-    Description:
-        This function use PCA to find a rotation matrix that transform the tar_img to ref_img.
-        sitk.Euler2DTransform or sitk.Euler3DTransform will be used.
-    Args:
-        tar_img: np.ndarray or sitk.Image
-        ref_img: np.ndarray or sitk.Image
-    Returns: 
-        sitk.Transfrom(): an sitk.Transform object that can be used in registration or resampling
-    '''
-
-    eval_tar, evec_tar, center_tar = PCA(tar_img)
-    _, evec_ref, center_ref = PCA(ref_img)
-
-    if len(eval_tar) == 2:
-        transform = sitk.Euler2DTransform()
-    elif len(eval_tar) == 3:
-        transform = sitk.Euler3DTransform()
-    
-    # the indexing oder is [x,y,z] in sitk and [z,y,x] in numpy. So we need to change it.
-    matrix = rotation_matrix(evec_tar, evec_ref)
-
-    transform.SetCenter(center_tar) # this is the rotation center
-    transform.SetMatrix(matrix.flatten()) # SetMatrix() take input as tuple or 1d-array
-    transform.SetTranslation(center_tar-center_ref) 
-
-    return transform
-
-def rotate_2D(center, angle):
-    '''
-    Description:
-        rotate a 2D image by an angle clockwisely
-    Args:
-        image: ndarray or sitk.Image
-        angle: float32, an angle in radian; for example, np.pi
-    Returns:
-        transfrom: sitk.transform
-    '''
-    transform = sitk.Euler2DTransform()
-    transform.SetCenter(center)
-    transform.SetAngle(angle)
-
-    return transform
-
-def resample_insitu(image,transform,interpolator = sitk.sitkLinear, sitkdtype=sitk.sitkFloat32):
-    
-    if type(image) == np.ndarray:
-        image = sitk.GetImageFromArray(image)
-    elif type(image) == sitk.Image:
-        pass
-
-    return sitk.Resample(image,image,transform,interpolator,sitkdtype)
 
 def show_images(*args,**kwds):
     '''
@@ -405,11 +298,208 @@ def interact_display(*args):
                 z_interact = kwds[key[i]] # retrieve z_index from the dictionary
                 img = kwds[key[i+m]]    # retrieve img/np.array from the dictionary
                 ax[i].imshow(img[z_interact,:,:],cmap=plt.cm.Greys_r)
-                ax[i].set_title("Image {}".format(i))
+                ax[i].set_title("Image {}".format(i+1))
                 ax[i].axis("off")
         
         fig.show()
     
     interact(display, **kwds_input)
 
+def PCA(image,threshold = 90):
+    '''
+    Desription: find the eigen vectors of a 2D image by PCA. 
+    Args: 
+            Image: 2d np.ndarray / sitk.Image()
+            threshold: int, a grey value threshold to create a binary image.
+    Returns: 
+            evals: ndarray, each element is a eigein value with descending order
+            evecs: ndarray, each column is a eigein vector
+            center: ndarray, the center [x, y, z] of the image after thresholding
+            note: corresponding eigein_values in descending order
+    '''
+    if type(image) == sitk.Image:
+        image = sitk.GetArrayFromImage(image)
+    elif type(image) == np.ndarray:
+        pass
+
+    coords = np.flip(np.vstack(np.nonzero(image>threshold)),axis = 0) # get coordinates
+    center = coords.mean(axis=1,dtype=np.float64)   # get center
+    centered_coords = np.subtract(coords,center.reshape(-1,1))  # get centered coordinates
+    cov = np.cov(centered_coords)   # get covariance matrix
+    evals, evecs = np.linalg.eig(cov)   
+    sort_indices = np.argsort(evals)[::-1]
+
+    return evals[sort_indices], evecs[:, sort_indices], center
+
+def rotation_matrix(mv_coord, ref_coord):
+    '''
+    Description:
+        Given two coordinates, find a rotation matrix that transform mv_coord to ref_coord
+    Args:
+        mv_coord: ndarray, dimension = 3
+        ref_coord: ndarray, dimension = 3
+    Return(s):
+        rotation_matrix: ndarray, a rotation matrix that transforms a 3d vector
+    '''
+
+    def direction_cosine(vect1,vect2):
+
+        return np.dot(vect1,vect2)/(np.linalg.norm(vect1)*np.linalg.norm(vect2))
     
+    assert (mv_coord.shape == ref_coord.shape and mv_coord.shape[0] == mv_coord.shape[1]), "mv_coord and ref_coord need to square matrices with the same dimension!"
+    
+    dim = mv_coord.shape[0]
+    _matrix = np.zeros((dim,dim))
+
+    for i in range(dim):
+        for j in range(dim):
+            _matrix[i,j] =direction_cosine(mv_coord[j],ref_coord[i]) 
+    
+    return _matrix.transpose()
+
+def rotate_2D(center, angle):
+    '''
+    Description:
+        rotate a 2D image by an angle clockwisely
+    Args:
+        image: ndarray or sitk.Image
+        angle: float32, an angle in radian; for example, np.pi
+    Returns:
+        transfrom: sitk.transform
+    '''
+    transform = sitk.Euler2DTransform()
+    transform.SetCenter(center)
+    transform.SetAngle(angle)
+
+    return transform
+
+def resample_insitu(image,transform,interpolator = sitk.sitkLinear, sitkdtype=sitk.sitkFloat32):
+    
+    if type(image) == np.ndarray:
+        image = sitk.GetImageFromArray(image)
+    elif type(image) == sitk.Image:
+        pass
+
+    return sitk.Resample(image,image,transform,interpolator,sitkdtype)
+
+def init_transform_PCA_new(tar_img, ref_img):
+    '''
+    Description:
+        This function use PCA to find a rotation matrix that transform the tar_img to ref_img.
+        sitk.Euler2DTransform or sitk.Euler3DTransform will be used.
+    Args:
+        tar_img: sitk.Image
+        ref_img: sitk.Image
+    Returns: 
+        sitk.Transfrom(): an sitk.Transform object that can be used in registration or resampling
+    '''
+
+    eval_tar, evec_tar, center_tar = PCA(tar_img)
+    _, evec_ref, center_ref = PCA(ref_img)
+
+    if np.dot(evec_tar[:,0], evec_ref[:,0]) < 0:
+        evec_tar[:,0] = evec_tar[:,0]*-1
+    
+    evec2 = np.copy(evec_tar)
+    evec2[:,1] = evec2[:,1]*-1
+    evec3 = np.copy(evec_tar)
+    evec3[:,2] = evec2[:,2]*-1
+    evec4 = np.copy(evec_tar)
+    evec4[:,(1,2)] = evec2[:,(1,2)]*-1
+
+    # setup a registration method to evaluate similarity matrics
+    registration = sitk.ImageRegistrationMethod()
+    registration.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    registration.SetMetricSamplingStrategy(registration.RANDOM)
+    registration.SetMetricSamplingPercentage(0.2)
+    registration.SetInterpolator(sitk.sitkLinear)    
+
+    # setup a transformation method for registration
+    transform = sitk.Euler3DTransform()
+    transform.SetCenter(center_tar) # this is the rotation center   
+    transform.SetTranslation(center_tar-center_ref)
+
+    similarity_values = np.array([])
+    rot_matrics = []
+
+    for evec in [evec_tar,evec2,evec3, evec4]:
+
+        matrix = rotation_matrix(evec, evec_ref)        # find the rotation matrix
+        transform.SetMatrix(matrix.transpose().flatten())   # SetMatrix() take input as tuple or 1d-array
+        registration.SetInitialTransform(transform,inPlace=False)
+        rot_matrics.append(matrix)
+        np.append(similarity_values, registration.MetricEvaluate(sitk.Cast(tar_img, sitk.sitkFloat32), sitk.Cast(ref_img, sitk.sitkFloat32)))
+
+    od = np.argsort(similarity_values) # find the smallest similarity value and its corresponding rotation matrix
+    # parse to transform
+    transform.SetMatrix(rot_matrics[od[0]].transpose().flatten())
+
+    return transform
+
+def init_transform_PCA(tar_img, ref_img):
+    '''
+    Description:
+        This function use PCA to find a rotation matrix that transform the tar_img to ref_img.
+        sitk.Euler2DTransform or sitk.Euler3DTransform will be used.
+    Args:
+        tar_img: np.ndarray or sitk.Image
+        ref_img: np.ndarray or sitk.Image
+    Returns: 
+        sitk.Transfrom(): an sitk.Transform object that can be used in registration or resampling
+    '''
+
+    eval_tar, evec_tar, center_tar = PCA(tar_img)
+    _, evec_ref, center_ref = PCA(ref_img)
+
+    if len(eval_tar) == 2:
+        transform = sitk.Euler2DTransform()
+    elif len(eval_tar) == 3:
+        transform = sitk.Euler3DTransform()
+    
+    # the indexing oder is [x,y,z] in sitk and [z,y,x] in numpy. So we need to change it.
+    matrix = rotation_matrix(evec_tar, evec_ref)
+
+    transform.SetCenter(center_tar) # this is the rotation center
+    transform.SetMatrix(matrix.flatten()) # SetMatrix() take input as tuple or 1d-array
+    transform.SetTranslation(center_tar-center_ref) 
+
+    return transform
+
+def init_transform_best_angle(tar_img, ref_img, angles = None):
+    '''
+    Description: 
+        Given a list of angles, find the best initial transfromation with the smallest similarity value
+    Args:
+        tar_img, ref_img: sitk.Image() type, target and reference images
+        angles: a list a radiant angles, by default 
+    '''
+
+    if angles is None:
+        angles = np.arange(-5,3)*np.pi/6
+
+    # Registration framework setup.
+    registration_method = sitk.ImageRegistrationMethod()
+    registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
+    registration_method.SetMetricSamplingPercentage(0.01)
+    registration_method.SetInterpolator(sitk.sitkLinear)
+
+    # Evaluate the similarity metric using the rotation parameter space sampling, translation remains the same for all.
+    initial_transform = sitk.Euler3DTransform(sitk.CenteredTransformInitializer( ref_img, tar_img,
+                                                                                sitk.Euler3DTransform(), 
+                                                                                sitk.CenteredTransformInitializerFilter.MOMENTS))
+
+    registration_method.SetInitialTransform(initial_transform, inPlace=False)
+    similarity = np.array([])
+
+    # Iterate over all other rotation parameter settings. 
+    for i, angle in enumerate(angles):
+
+        initial_transform.SetRotation(0.0,0.0,angle)
+        registration_method.SetInitialTransform(initial_transform)
+        similarity = np.append(similarity, registration_method.MetricEvaluate(ref_img, tar_img))
+    
+    od = np.argsort(similarity)
+    initial_transform.SetRotation(0.0,0.0,angles[od[0]])
+
+    return initial_transform
