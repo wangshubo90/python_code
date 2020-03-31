@@ -10,6 +10,8 @@ import time
 import concurrent.futures
 import logging
 import cv2
+import shutil
+import glob
 
 def knee_join_z_index(limb):
     '''
@@ -23,10 +25,10 @@ def knee_join_z_index(limb):
     # np.nonzero finds all (pixels>threshold)' index as a tuple
     # np.vstack cancatenate the tuple elements and returns a ndarray
     # np.std calculate standar deviation of x and y in each plane
-    index = [np.std(np.vstack(np.nonzero(i>80)), axis = 1) for i in limb]
+    index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1200:2500])[0]+1200
+    z_index = np.argsort(index[1000:1700])[0]+1000
 
     return z_index
 
@@ -55,7 +57,7 @@ def LR_mid_x(image):
 
 def splitLRTF(folder,imgtitle,outfd = None):
     logging.info("Reading {}".format(imgtitle))
-    img = imreadseq_multithread(folder, sitkimg= False, rmbckgrd=60,thread=2)
+    img = imreadseq_multithread(folder, sitkimg= False, rmbckgrd=60, thread=2)
     logging.info("Processing...split LT & LF")
     width = img.shape[2]
     mid_idx = LR_mid_x(img)
@@ -72,8 +74,12 @@ def splitLRTF(folder,imgtitle,outfd = None):
     pathlist.append(os.path.join(outfd,imgtitle+' right femur'))
 
     for fd in pathlist:
-        if not os.path.exists(fd):
+        if os.path.exists(fd):
+            shutil.rmtree(fd)
             os.mkdir(fd)
+        else:
+            os.mkdir(fd)
+
     titlelist = [imgtitle+' left tibia', imgtitle+' left femur',
                 imgtitle+' right tibia',imgtitle+' right femur']
     
@@ -98,7 +104,7 @@ def splitLRTF(folder,imgtitle,outfd = None):
     logging.info("Processing...split RT & RF")
     z_index_splt_right=knee_join_z_index(right)
     right_tibia = sitk.GetImageFromArray(auto_crop(right[:z_index_splt_right]))
-    right_femur = sitk.GetImageFromArray(auto_crop(rotate_by_euler_angles(right[z_index_splt_right:])))
+    right_femur = sitk.GetImageFromArray(auto_crop(right[z_index_splt_right:]))
     del right
     imagelist = [right_tibia,right_femur]
     logging.info("Writing...")
@@ -108,21 +114,34 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/2nd batch reconstruction Sep-2018 4.0 N/9.7.2018 tibia week 1 reconstruction'
-    masterout = r'/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/2nd batch reconstruction Sep-2018 4.0 N/2nd batch LR tibia and femur'
+    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Reconstruction  Heart July-2019'
+    masterout = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Reconstruction  Heart July-2019/Heart July-2019 LR tibia and femur'
     time1 = time.time()
     count = 0
+
+    #with open("/home/spl/uncompleted.txt", "r") as file:
+    #    retry = file.readlines()
+
+    retry = ["384 week 0"]
 
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
-
-    for folder in sorted(os.listdir(masterfolder))[:]:
-        count += 1
-        ID = os.path.basename(folder)[0:10]
-        logging.info('Cropping for {} started.'.format(ID))
-        splitLRTF(os.path.join(masterfolder,folder),ID,masterout)
-        logging.info('Cropping for {} is completed.'.format(ID))
+    failed = []
+    for inputfd in glob.glob(os.path.join(masterfolder,"Reconstruction*")):
+        for folder in sorted(os.listdir(inputfd))[:]:
+            if folder[:10] in retry:
+                count += 1
+                ID = os.path.basename(folder)[0:10]
+                logging.info('Cropping for {} started.'.format(ID))
+                try:
+                    splitLRTF(os.path.join(inputfd,folder),ID,masterout)
+                    logging.info('Cropping for {} is completed.'.format(ID))
+                except Exception:
+                    failed.append(folder)
+                    logging.info('Cropping for {} failed.'.format(ID))
+                    pass
     
+    print(failed)
     time2 = time.time()
     logging.info("Average time used: {: >8.1f} seconds".format((time2-time1)/count)) 

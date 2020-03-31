@@ -107,7 +107,7 @@ def imreadseq_multithread(fdpath,thread = 4,sitkimg = True, rmbckgrd = None, z_r
 
     return images
 
-def auto_crop(image,background=100):
+def auto_crop(image,background=120):
     '''
     Description: this function shrint the frame in x-y plane of a 3D image. 
                         Z-axis is not changed.
