@@ -86,7 +86,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
     # Similarity metric settings.
     registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
-    registration_method.SetMetricSamplingPercentage(0.05)
+    registration_method.SetMetricSamplingPercentage(0.20)
     registration_method.SetInterpolator(sitk.sitkLinear)
     '''
     registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.4,
@@ -100,7 +100,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
                                                             convergenceWindowSize=10)
     
     registration_method.SetOptimizerScalesFromPhysicalShift()
-    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [8,4,2])
+    registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [4,2,1])
     registration_method.SetSmoothingSigmasPerLevel(smoothingSigmas=[2,2,1])
     registration_method.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
     # or can do initial transform in place

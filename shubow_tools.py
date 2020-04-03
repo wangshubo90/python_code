@@ -468,7 +468,7 @@ def init_transform_PCA(tar_img, ref_img):
 
     return transform
 
-def init_transform_best_angle(tar_img, ref_img, angles = None):
+def init_transform_best_angle(tar_img, ref_img, angles = None, z_translation = True):
     '''
     Description: 
         Given a list of angles, find the best initial transfromation with the smallest similarity value
@@ -492,6 +492,14 @@ def init_transform_best_angle(tar_img, ref_img, angles = None):
                                                                                 sitk.Euler3DTransform(), 
                                                                                 sitk.CenteredTransformInitializerFilter.MOMENTS))
 
+    # If trasition along z-axis is not prefered:
+    if z_translation:
+        pass
+    else:
+        trans = initial_transform.GetTranslation()
+        trans = [trans[0], trans[1], 0.0]
+        initial_transform.SetTranslation(trans)
+    
     registration_method.SetInitialTransform(initial_transform, inPlace=False)
     similarity = np.array([])
 

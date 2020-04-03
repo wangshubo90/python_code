@@ -28,7 +28,7 @@ def knee_join_z_index(limb):
     index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1000:1700])[0]+1000
+    z_index = np.argsort(index[1200:2000])[0]+1200
 
     return z_index
 
@@ -114,33 +114,32 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Reconstruction  Heart July-2019'
-    masterout = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Reconstruction  Heart July-2019/Heart July-2019 LR tibia and femur'
+    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019/Treadmill trial 6 male mice Recon'
+    masterout = r'/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019/Treadmill trial 6 male mice LT RT LF RF'
     time1 = time.time()
     count = 0
 
     #with open("/home/spl/uncompleted.txt", "r") as file:
     #    retry = file.readlines()
-
-    retry = ["384 week 0"]
+    #retry = ["384 week 0"]
 
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
     failed = []
-    for inputfd in glob.glob(os.path.join(masterfolder,"Reconstruction*")):
+    for inputfd in glob.glob(os.path.join(masterfolder,"*reconstrunction")):
         for folder in sorted(os.listdir(inputfd))[:]:
-            if folder[:10] in retry:
-                count += 1
-                ID = os.path.basename(folder)[0:10]
-                logging.info('Cropping for {} started.'.format(ID))
-                try:
-                    splitLRTF(os.path.join(inputfd,folder),ID,masterout)
-                    logging.info('Cropping for {} is completed.'.format(ID))
-                except Exception:
-                    failed.append(folder)
-                    logging.info('Cropping for {} failed.'.format(ID))
-                    pass
+            #if folder[:10] in retry:
+            count += 1
+            ID = os.path.basename(folder)[0:10]
+            logging.info('Cropping for {} started.'.format(ID))
+            try:
+                splitLRTF(os.path.join(inputfd,folder),ID,masterout)
+                logging.info('Cropping for {} is completed.'.format(ID))
+            except Exception:
+                failed.append(folder)
+                logging.info('Cropping for {} failed.'.format(ID))
+                pass
     
     print(failed)
     time2 = time.time()
