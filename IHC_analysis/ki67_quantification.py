@@ -15,11 +15,12 @@ import re
 
 #_______global________
 
-fdpath = '/home/spl/ki67_IHC_week3_imgs/Image reaquiscition test/week 3 treadmill ki67'    # target folder
-seg_path = os.path.join(fdpath,'segmentation')
-os.mkdir(seg_path)
+fdpath = '/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/ki67'    # target folder
+seg_path = os.path.join(fdpath,'segmentation_norm')
+if not os.path.exists(seg_path):
+  os.mkdir(seg_path) 
 
-imgref_path = fdpath + '/ref.tif'
+imgref_path = '/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/ki67/318 R slice 29 ki67 20x #19.tif'
 
 imgref = skimage.io.imread(imgref_path)
 
@@ -48,11 +49,11 @@ def ihc_quant(filename,fdpath):
         imgoutput_name = imginput_name + '_segmented.tif' 
         imgoutput_path = os.path.join(seg_path,imgoutput_name)
     
-        #imginput = htk.preprocessing.color_normalization.reinhard(imginput, mean_ref, stdev_ref)
+        imginput = htk.preprocessing.color_normalization.reinhard(imginput, mean_ref, stdev_ref)
           #	imginput = skimage.filters.gaussian(imginput, sigma = 2.0, truncate = 1/5)
         #imginput = cv2.bitwise_not(imginput)
         imginput = cv2.GaussianBlur(imginput, (5,5), 0)
-        imginput = cv2.medianBlur(imginput, 5)
+        #imginput = cv2.medianBlur(imginput, 5)
           #__Color_deconvolution__
         img_deconvolved = htk.preprocessing.color_deconvolution.color_deconvolution(imginput, conv_matrix)        
           #__Kmeans_segmentation__

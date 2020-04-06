@@ -28,7 +28,7 @@ def knee_join_z_index(limb):
     index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1200:2000])[0]+1200
+    z_index = np.argsort(index[1700:2000])[0]+1700
 
     return z_index
 
@@ -90,7 +90,7 @@ def splitLRTF(folder,imgtitle,outfd = None):
     ##### Save left tibia and femur #####
     z_index_splt_left=knee_join_z_index(left)
     left_tibia = sitk.GetImageFromArray(auto_crop(left[:z_index_splt_left]))
-    left_femur = sitk.GetImageFromArray(auto_crop(rotate_by_euler_angles(left[z_index_splt_left:])))
+    left_femur = sitk.GetImageFromArray(auto_crop(left[z_index_splt_left:]))
     del left
     # use multiple threads to accelerate writng images to disk.
     # create an iterable to be passed to imreadseq(img,fd,title)
@@ -114,33 +114,34 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019/Treadmill trial 6 male mice Recon'
-    masterout = r'/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019/Treadmill trial 6 male mice LT RT LF RF'
+    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/Reconstruction Intracardiac Sep-2018'
+    masterout = r'/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia'
     time1 = time.time()
     count = 0
 
-    #with open("/home/spl/uncompleted.txt", "r") as file:
-    #    retry = file.readlines()
-    #retry = ["384 week 0"]
+    with open(r"/media/spl/D/MicroCT_data/Shubo/Reconstruction image/retry.txt", "r") as file:
+        retry = file.readlines()
+    retry = [i[:-1] for i in retry]
 
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
     failed = []
-    for inputfd in glob.glob(os.path.join(masterfolder,"*reconstrunction")):
+
+    for inputfd in glob.glob(os.path.join(masterfolder,"*reconstruction")):
         for folder in sorted(os.listdir(inputfd))[:]:
-            #if folder[:10] in retry:
-            count += 1
-            ID = os.path.basename(folder)[0:10]
-            logging.info('Cropping for {} started.'.format(ID))
-            try:
-                splitLRTF(os.path.join(inputfd,folder),ID,masterout)
-                logging.info('Cropping for {} is completed.'.format(ID))
-            except Exception:
-                failed.append(folder)
-                logging.info('Cropping for {} failed.'.format(ID))
-                pass
-    
+            if folder in ["270 week 1"]:
+                count += 1
+                ID = os.path.basename(folder)[0:10]
+                logging.info('Cropping for {} started.'.format(ID))
+                try:
+                    splitLRTF(os.path.join(inputfd,folder),ID,masterout)
+                    logging.info('Cropping for {} is completed.'.format(ID))
+                except Exception:
+                    failed.append(folder)
+                    logging.info('Cropping for {} failed.'.format(ID))
+                    pass
+
     print(failed)
     time2 = time.time()
     logging.info("Average time used: {: >8.1f} seconds".format((time2-time1)/count)) 

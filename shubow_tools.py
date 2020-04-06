@@ -478,7 +478,7 @@ def init_transform_best_angle(tar_img, ref_img, angles = None, z_translation = T
     '''
 
     if angles is None:
-        angles = np.arange(-5,3)*np.pi/6
+        angles = np.arange(-6,2)*np.pi/6
 
     # Registration framework setup.
     registration_method = sitk.ImageRegistrationMethod()

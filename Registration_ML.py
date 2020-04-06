@@ -11,10 +11,10 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019"
+wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration"
 os.chdir(wkdir)
-masterdir = r"Treadmill trial 6 male mice LT RT LF RF"
-masteroutput = r"Treadmill trial tibia registration" 
+masterdir = r"/run/user/1000/gvfs/smb-share:server=lywanglab,share=micro_ct_data/Micro CT reconstruction/Reconstruction  Heart July-2019/Heart July-2019 LR tibia and femur"
+masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration" 
 
 refdir = r"/media/spl/D/MicroCT_data/MicroCT registration ref/whole_tibia_ref_large"
 
@@ -34,14 +34,16 @@ with open("failed.txt", "r") as f :
 retry = [i[:-1] for i in retry]
 
 for file in sorted(os.listdir(masterdir))[:]:
-    if re.search(r"M\d{2} (week \d) (left|right) tibia", file) and file in retry:
+    if re.search(r"\d{3} (week \d) (left|right) tibia", file) and file in retry:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
         tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = True, rmbckgrd=75, z_range=(-730, None))
+                                sitkimg = True, rmbckgrd=75, z_range=(-850, None))
         tar_img = down_scale(tar_img, down_scale_factor=2.0)
         
-        ini_transform = init_transform_best_angle(tar_img,ref_img, angles=[0.0], z_translation= False)
+        logging.info('Initial Transforming ...')
+        #ini_transform = init_transform_best_angle(tar_img,ref_img, angles=[0.0])
+        ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
 
