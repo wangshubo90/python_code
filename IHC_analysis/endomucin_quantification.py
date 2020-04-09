@@ -14,15 +14,15 @@ import os
 
 #_______global________
 
-fdpath = os.getcwd()    # target folder
-imgref_path = fdpath + '/ref.tif'
+fdpath = r'/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/Endomucin'    # target folder
+#imgref_path = fdpath + '/ref.tif'
 
-imgref = skimage.io.imread(imgref_path)
+#imgref = skimage.io.imread(imgref_path)
 
 stain_color_map = htk.preprocessing.color_deconvolution.stain_color_map # construct deconvolution matrix
 stains = ['hematoxylin', 'dab','null']
 conv_matrix = np.array([stain_color_map[st] for st in stains]).T
-mean_ref, stdev_ref = htk.preprocessing.color_conversion.lab_mean_std(imgref) # image normalization
+#mean_ref, stdev_ref = htk.preprocessing.color_conversion.lab_mean_std(imgref) # image normalization
 
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0) # kmeans parameters
@@ -58,7 +58,7 @@ def ihc_quant(filename,fdpath):
         #print('center of '+imginput_name+' is',center)
         DAB_index = np.argsort(center[:,1])[0]
         He_index = np.argsort(center[:,0])[0]
-        if He_index = DAB_index:
+        if He_index == DAB_index:
             He_index = np.argsort(center[:,0])[1]
         
         bk_index = np.delete(np.array([0,1,2]),[DAB_index,He_index])[0]

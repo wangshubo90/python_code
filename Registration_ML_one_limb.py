@@ -28,7 +28,7 @@ def knee_join_z_index(limb):
     index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1400:1900])[0]+1400
+    z_index = np.argsort(index[1400:2000])[0]+1400
 
     return z_index
 
@@ -78,11 +78,11 @@ if __name__ == "__main__":
 
     time1 = time.time()
     count = 0
-    '''
-    with open(r"/media/spl/D/MicroCT_data/Shubo/Reconstruction image/retry.txt", "r") as file:
+    
+    with open(r"failed.txt", "r") as file:
         retry = file.readlines()
     retry = [i[:-1] for i in retry]
-    '''
+    
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S")
@@ -90,14 +90,15 @@ if __name__ == "__main__":
 
     for inputfd in glob.glob(os.path.join(masterfolder,"Treadmill*")):
         for folder in sorted(os.listdir(inputfd))[:]:
-            if True: #folder in ["270 week 1"]:
+            if folder in ['351 week 0 left']:
                 count += 1
                 ID = os.path.basename(folder)
                 logging.info('Cropping for {} started.'.format(ID))
                 try:
                     splitTF(os.path.join(inputfd,folder),ID,masterout)
                     logging.info('Cropping for {} is completed.'.format(ID))
-                except Exception:
+                except Exception as err:
+                    print(err)
                     failed.append(folder)
                     logging.info('Cropping for {} failed.'.format(ID))
                     pass

@@ -28,7 +28,7 @@ def knee_join_z_index(limb):
     index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1700:2000])[0]+1700
+    z_index = np.argsort(index[1300:1700])[0]+1300
 
     return z_index
 
