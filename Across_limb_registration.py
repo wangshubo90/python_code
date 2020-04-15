@@ -74,7 +74,7 @@ def cent_transform (ref_img,tar_img):
     initial_transform = sitk.CenteredTransformInitializer(sitk.Cast(ref_img,sitk.sitkFloat32), 
                                                       sitk.Cast(tar_img,sitk.sitkFloat32), 
                                                       sitk.Euler3DTransform(), 
-                                                      sitk.CenteredTransformInitializerFilter.MOMENTS)
+                                                      sitk.CenteredTransformInitializerFilter.GEOMETRY)
 
     #tar_resampled = sitk.Resample(tar_img, ref_img, initial_transform, sitk.sitkLinear, 0.0, tar_img.GetPixelID())
     return initial_transform
