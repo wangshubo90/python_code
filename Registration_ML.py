@@ -16,19 +16,19 @@ os.chdir(wkdir)
 masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia"
 masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia registered" 
 
-refdir = r"/media/spl/D/MicroCT_data/MicroCT registration ref/whole_tibia_ref_large"
+refdir = r"/media/spl/D/MicroCT_data/MicroCT registration ref/whole_tibia_ref"
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO, 
                     datefmt="%H:%M:%S")
 logging.info('Loading reference image...')
 
-ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-752,None])
+ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-756,None])
 ref_img = down_scale(ref_img, down_scale_factor=2.0)
 
 failed_list = []
 
-with open("failed.txt", "r") as f :
+with open("failed2.txt", "r") as f :
     retry = f.readlines()
 
 retry = [i[:-1] for i in retry]
@@ -40,16 +40,16 @@ for file in sorted(os.listdir(masterdir))[:]:
         
         if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = False, rmbckgrd=75, z_range=(-860, -100))
+                                sitkimg = False, rmbckgrd=75, z_range=(-980, -80))
             tar_img = sitk.GetImageFromArray(np.flip(tar_img, axis = 2))
         else:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = True, rmbckgrd=75, z_range=(-860, -100))
+                                sitkimg = True, rmbckgrd=75, z_range=(-980, -80))
         
         tar_img = down_scale(tar_img, down_scale_factor=2.0)
-        
+
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(tar_img,ref_img, z_translation=False)
+        ini_transform = init_transform_best_angle(tar_img,ref_img, angles=[np.pi*i/6 for i in range(-3,3)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
@@ -76,6 +76,6 @@ for file in sorted(os.listdir(masterdir))[:]:
 
 print(failed_list)
 
-with open("failed.txt", "w") as f:
+with open("failed2.txt", "w") as f:
     for i in failed_list:
         f.write(i+"\n")
