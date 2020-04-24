@@ -10,31 +10,31 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019"
+wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration"
 os.chdir(wkdir)
-masterdir = r"Treadmill trial 6 male mice LT RT LF RF"
-masteroutput = r"Treadmill trial tibia registration" 
+masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration"
+masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration" 
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO, 
                     datefmt="%H:%M:%S")
 logging.info('Loading reference image...')
 
-refdir = r"/media/spl/D/MicroCT_data/Shubo/treadmill running trail 4.8.2019/Treadmill trial tibia registration/M93 week 4 left tibia registered"
+refdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia registered/339 week 0 left tibia registered"
 ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True)
 
 failed_list = []
-
+'''
 with open("failed.txt", "r") as f :
     retry = f.readlines()
 
 retry = [i[:-1] for i in retry]
-
+'''
 for file in sorted(os.listdir(masterdir))[:]:
-    if re.search(r"M\d{2} (week \d) (left|right) tibia", file) and file in retry[2:]:
+    if re.search(r"\d{3} (week \d) (left|right) tibia", file): # and file in retry[2:]:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
-        tar_img = imreadseq_multithread(os.path.join(masterdir,file,"Registration"), thread=2,
+        tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
                                 sitkimg = True, rmbckgrd=75, z_range=(-752, None))
         tar_img = down_scale(tar_img, down_scale_factor=2.0)
         tar_img.SetSpacing((1.0,1.0,1.0))
@@ -47,7 +47,7 @@ for file in sorted(os.listdir(masterdir))[:]:
         else:
             os.mkdir(suboutput)
         
-        initial_transform = sitk.Euler3DTransform(sitk.CenteredTransformInitializer( sitk.Cast(ref_img, sitk.sitkFloat32), tar_img,
+        initial_transform = sitk.Euler3DTransform(sitk.CenteredTransformInitializer( sitk.Cast(ref_img[:,:,-350:-325], sitk.sitkFloat32), tar_img[:,:,-350:-325],
                                                                                 sitk.Euler3DTransform(), 
                                                                                 sitk.CenteredTransformInitializerFilter.MOMENTS))
         

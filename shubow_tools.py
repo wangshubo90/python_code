@@ -26,6 +26,7 @@ def imreadseq(fdpath,sitkimg=True,rmbckgrd = None, z_range = None,seq_pattern=No
                 z_range: list or ndarray with 2 elements indecating the lower and upper bound
     Returns: 3d ndarray / sitk image object
     '''
+    assert os.path.exists(fdpath), "The folder doesn't exist!"
     images = []
 
     if seq_pattern is None:
