@@ -10,17 +10,17 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration"
+wkdir = r"/home/blue/machine learning/Dataviewer Registration"
 os.chdir(wkdir)
-masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration"
-masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/Dataviewer Registration" 
+masterdir = r"/home/blue/machine learning/Dataviewer Registration"
+masteroutput = r"/home/blue/machine learning/Dataviewer Registration" 
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO, 
                     datefmt="%H:%M:%S")
 logging.info('Loading reference image...')
 
-refdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia registered/339 week 0 left tibia registered"
+refdir = r"/home/blue/machine learning/2nd batch tibia registered/283 week 1 left tibia registered"
 ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True)
 
 failed_list = []
@@ -30,7 +30,7 @@ with open("failed.txt", "r") as f :
 
 retry = [i[:-1] for i in retry]
 '''
-for file in sorted(os.listdir(masterdir))[:]:
+for file in sorted(os.listdir(masterdir))[:1]:
     if re.search(r"\d{3} (week \d) (left|right) tibia", file): # and file in retry[2:]:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
