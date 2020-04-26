@@ -10,25 +10,31 @@ from shubow_tools import *
 import shutil
 import numpy as np
 
-ref = '/home/spl/Machine Learning/Data100x100x48/418LT_w0.nii.gz'
+ref = '/home/blue/machine learning/418LT_w0.nii.gz'
 ref = sitk.ReadImage(ref)
-tar = '/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia and registration/Treadmill running 35n tibia registered/349 week 3 right tibia registered'
-tar = imreadseq_multithread(tar, z_range=[-110,-6])
-tar = down_scale(tar,2.15)
-tar.SetSpacing(ref.GetSpacing())
-tar.SetOrigin(ref.GetOrigin())
-tar = sitk.Cast(tar,sitk.sitkFloat32)
 
-initial_transform = sitk.Euler3DTransform(sitk.CenteredTransformInitializer( 
-        sitk.Cast(ref, sitk.sitkFloat32), sitk.Cast(tar, sitk.sitkFloat32),
-        sitk.Euler3DTransform(), 
-        sitk.CenteredTransformInitializerFilter.MOMENTS)
-        )
+tardir = r'/home/blue/machine learning/3rd batch tibia registered'
+outdir = r'/home/blue/machine learning/100x100x48 niis'
+os.chdir(tardir)
 
-trans = initial_transform.GetTranslation()
-trans = [trans[0], trans[1], 0.0]
-initial_transform.SetTranslation(trans)  
 
-tar_reg = sitk.Resample(sitk.Cast(tar, sitk.sitkFloat32), sitk.Cast(ref, sitk.sitkFloat32), initial_transform, sitk.sitkLinear, 0.0, tar.GetPixelID())
-sitk.WriteTransform(initial_transform, r'/media/spl/D/MicroCT_data/Machine learning/x207y303.tfm')
-sitk.WriteImage(tar_reg, r'/media/spl/D/MicroCT_data/Machine learning/x207y303test.nii')
+
+for fd in os.listdir(tardir):
+        s = re.search(r'(\d{3}) week (\d) (left|right) tibia', fd)
+        name = '{}{}T_w{}'.format(s.group(1),s.group(3)[0].upper(), s.group(2))
+        tar = imreadseq_multithread(fd, z_range=[-104,None])
+        
+        if tar.GetSize() == (276, 275, 104):
+                initial_transform = sitk.ReadTransform(r'/home/blue/machine learning/x276y275.tfm')
+        elif tar.GetSize() == (207, 303, 104):
+                initial_transform = sitk.ReadTransform(r'/home/blue/machine learning/x207y303.tfm')
+        elif tar.GetSize() == (304, 278, 104):
+                initial_transform = sitk.ReadTransform(r'/home/blue/machine learning/x304y278.tfm')
+
+        tar = down_scale(tar,2.15)
+        tar.SetSpacing(ref.GetSpacing())
+        tar.SetOrigin(ref.GetOrigin())
+
+        tar_reg = sitk.Resample(sitk.Cast(tar, sitk.sitkFloat32), sitk.Cast(ref, sitk.sitkFloat32), initial_transform, sitk.sitkLinear, 0.0, sitk.sitkFloat32)
+
+        sitk.WriteImage(tar_reg, os.path.join(outdir,name+'.nii.gz'))
