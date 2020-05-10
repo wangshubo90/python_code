@@ -11,10 +11,10 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Machine learning/3rd batch week 1 tibia registration"
+wkdir = r"/media/spl/D/MicroCT_data/Machine learning/rest"
 os.chdir(wkdir)
-masterdir = r"/media/spl/D/MicroCT_data/Machine learning/3rd batch week 1 LR tibia femur"
-masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/3rd batch week 1 tibia registration" 
+masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/rest" 
 
 refdir = r"/media/spl/D/MicroCT_data/MicroCT registration ref/whole_tibia_ref"
 
@@ -37,19 +37,19 @@ for file in sorted(os.listdir(masterdir))[:]:
     if re.search(r"\d{3} (week \d) (left|right) tibia", file) and file in retry:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
-        '''
-        if 'right' in file:
+        
+        '''if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
                                 sitkimg = False, rmbckgrd=75, z_range=(-880, -80))
             tar_img = sitk.GetImageFromArray(np.flip(tar_img, axis = 2))
         else:'''
         tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = True, rmbckgrd=75, z_range=(-820, -40))
+                                sitkimg = True, rmbckgrd=75, z_range=(-870, -110))
         
         tar_img = down_scale(tar_img, down_scale_factor=2.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(tar_img,ref_img, angles=[np.pi*i/8 for i in range(-3,1)])
+        ini_transform = init_transform_best_angle(tar_img,ref_img, angles=[np.pi*i/8 for i in range(0,1)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []

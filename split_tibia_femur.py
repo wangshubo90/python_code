@@ -28,7 +28,7 @@ def knee_join_z_index(limb):
     index = [np.std(np.vstack(np.nonzero(i>100)), axis = 1) for i in limb]
     # the sums up x^2 and y^2; this is the second order momentum / total numer of value
     index = np.array(list(map(lambda x:x[0]**2+x[1]**2,index)))
-    z_index = np.argsort(index[1000:1600])[0]+1000
+    z_index = np.argsort(index[1300:1900])[0]+1300
 
     return z_index
 
@@ -114,8 +114,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/media/spl/D/MicroCT_data/Shubo/3rd batch week 1 reconstruction'
-    masterout = r'/media/spl/D/MicroCT_data/Machine learning/3rd batch week 1 LR tibia femur'
+    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Treadmill35 Reconstruction/Treadmill week 1 reconstruction'
+    masterout = r'/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia'
     time1 = time.time()
     count = 0
     '''
@@ -129,8 +129,8 @@ if __name__ == "__main__":
     failed = []
 
     #for inputfd in glob.glob(os.path.join(masterfolder,"*reconstruction")):
-    for folder in sorted(os.listdir(masterfolder))[1:]:
-        if folder in ['320 week 1']:
+    for folder in sorted(os.listdir(masterfolder))[:]:
+        if folder[0:10] in ['360 week 1', '361 week 1', '362 week 1', '363 week 1', '364 week 1', '365 week 1', '366 week 1']:
             count += 1
             ID = os.path.basename(folder)[0:10]
             logging.info('Cropping for {} started.'.format(ID))
