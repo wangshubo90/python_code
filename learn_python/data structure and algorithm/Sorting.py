@@ -39,6 +39,33 @@ def insert_sort(ls):
                 ls.pop(i)
                 ls.insert(j,temp)
 
+def merge_ordered(ls1, ls2):
+    a = len(ls1)
+    b = len(ls2)
+    i = 0
+    j = 0
+    new_ls = []
+
+    while i <= a - 1 and j <= b - 1:
+        if ls1[i] < ls2[j]:
+            new_ls.append(ls1[i])
+            i += 1
+        else:
+            new_ls.append(ls2[j])
+            j += 1
+
+    while i <= a - 1:
+        new_ls.append(ls1[i])
+        i += 1
+
+    while j <= b - 1:
+        new_ls.append(ls2[j])
+        j += 1
+
+    return new_ls
+
+
+
 if __name__ == "__main__":
     a = random.sample(range(100),50)
     print(a)
