@@ -3,11 +3,13 @@ import SimpleITK as sitk
 import pandas as pd 
 import os
 import matplotlib.pyplot as plt 
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
 
 os.chdir(r'/home/spl/Hands-on-machine-learning/Codes/100x100x48 niis')
 file_list = []
 
-y = pd.read_csv(r'/media/spl/D/MicroCT_data/Machine learning/Label and prediced label.csv')
+y = pd.read_csv(r'/home/spl/Hands-on-machine-learning/Codes/File_reference.csv')
 
 
 for i, file in enumerate(sorted(os.listdir())):
@@ -45,8 +47,10 @@ for i, file in enumerate(sorted(os.listdir())):
     
     if percentage < 0.675 and percentage > 0.31:
         group = 2
+        group5 = 3
     if percentage < 0.31:
         group = 3
+        group5 = 4
                     
     
     file_instance = {'Sample':sample, 'Time (week)':time, 'File name':file,
@@ -57,7 +61,7 @@ for i, file in enumerate(sorted(os.listdir())):
 df = pd.DataFrame(file_list)
 df = df[['Sample', 'Time (week)', 'File name','Total pixel', 'Time_perf', "%_to_1st", 'Group' ]]
 df['Label'] = y['Label']
-df['pred'] = y.iloc[:,11]
+df['pred'] = y['pred']
 df.astype({'Label': 'int', 'pred':'int'})
 
 df.head()
@@ -96,3 +100,11 @@ plt.plot(hist[1][:-1], hist[0])
 
 bins = np.linspace(0, 1.0, 50)
 plt.hist(ob3_df[ob3_df['Label'] == 1]['%_to_1st'], bins, alpha = 0.5, label = 'Perforated')
+
+cm = confusion_matrix(y['Group'].values, y['Pred_4groups'].values, normalize= None)
+plt.figure(figsize=(8, 6), dpi=100)
+sn.set(font_scale=1.2)
+sn.heatmap(cm, annot=True, cmap='pink', annot_kws={"size": 12}, fmt = 'd')
+plt.xlabel('Predicted label')
+plt.ylabel('True label')
+plt.savefig('/home/spl/Hands-on-machine-learning/Codes/4Classes_confusion_count.png')
