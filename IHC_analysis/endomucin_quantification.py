@@ -14,7 +14,7 @@ import os
 
 #_______global________
 
-fdpath = r'/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/Endomucin'    # target folder
+fdpath = r'E:\DATA\4.5N\Endomucin\Measurement'    # target folder
 #imgref_path = fdpath + '/ref.tif'
 
 #imgref = skimage.io.imread(imgref_path)

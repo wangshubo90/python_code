@@ -3,19 +3,22 @@ from skimage.io import imread, imsave
 import glob
 import os
 
-dir = r'/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/Trap 3rd batch w3/Bone surface/Mark'
+dir = r'E:\DATA\4th batch IHC\TRAP\Measurement'
 os.chdir(dir)
-files = glob.glob(r"*.png")
+files = glob.glob(r"*.tif")
 
 img_list = []
-dtype = [('Animal',np.int32),('Group', (np.str_, 10)),('File', (np.str_, 35)) ,('Bone surface count', np.int64), ('Trap surface count', np.int64), ('Trap percentage', np.float32)]
+dtype = [('Animal',(np.str_, 4)),('Group', (np.str_, 10)),('File', (np.str_, 35)) ,('Bone surface count', np.int64), ('Trap surface count', np.int64), ('Trap percentage', np.float32)]
 results = []
 
 for image in files:
-
-    fn = os.path.basename(image)
-    sample = fn[:3]
-    group = fn[4]
+    p = glob.glob(r'../*slice*/'+image[:-3]+'tif')
+    p = p[0]
+    p = os.path.dirname(p)
+    fn = p[3:]
+    #fn = os.path.basename(image)
+    sample = fn[:4]
+    group = fn[3]
     if group == 'L':
         group = 'Loaded'
     elif group == 'R':
@@ -43,7 +46,5 @@ for image in files:
     result = np.array([(sample, group, fn, bone_count, trap_count, trap_percent)], dtype=dtype)
     results.append(result[0])
 
-np.savetxt('./results.txt', results, fmt=['%d','%s','%s', '%d', '%d', '%f'], delimiter=',',
+np.savetxt('./results.txt', results, fmt=['%s','%s','%s', '%d', '%d', '%f'], delimiter=',',
          header = 'Animal,Group,Image name, Bone surface, Trap +, Trap + Percentage')
-
-    
