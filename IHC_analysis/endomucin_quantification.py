@@ -15,7 +15,8 @@ from skimage.color import rgb2grey
 
 import histomicstk as htk
 
-#_______global________
+fdpath = r'E:\DATA\4.5N\Endomucin\Measurement'    # target folder
+#imgref_path = fdpath + '/ref.tif'
 
 fdpath = r'/media/spl/UBUNTU 18_0/ki67 measure/test'    # target folder
 #imgref_path = r'/home/spl/Desktop/Measurement-Endomucin/ref.tif'

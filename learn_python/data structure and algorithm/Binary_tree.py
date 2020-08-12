@@ -36,5 +36,4 @@ def breadthFirstTrav(subtree):
             q.enQueue(node.left)
         if node.right is not None:
             q.enQueue(node.right)
-
         
