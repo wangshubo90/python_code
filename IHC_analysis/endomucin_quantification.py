@@ -3,20 +3,22 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import histomicstk as htk
+
+import os
+
+import cv2
 import numpy as np
+import skimage.color
 import skimage.io
 import skimage.measure
-import skimage.color
 from skimage.color import rgb2grey
-import cv2
-import os
+
+import histomicstk as htk
 
 #_______global________
 
-fdpath = r'/media/spl/D/IHC data/3rd batch bone mets IHC/week 3/Endomucin'    # target folder
-#imgref_path = fdpath + '/ref.tif'
-
+fdpath = r'/media/spl/UBUNTU 18_0/ki67 measure/test'    # target folder
+#imgref_path = r'/home/spl/Desktop/Measurement-Endomucin/ref.tif'
 #imgref = skimage.io.imread(imgref_path)
 
 stain_color_map = htk.preprocessing.color_deconvolution.stain_color_map # construct deconvolution matrix
@@ -96,3 +98,8 @@ for filename in sorted(os.listdir(fdpath)):
 
 np.savetxt(os.path.join(fdpath,'Endomucin_Results.csv'),results, delimiter=',', 
            fmt = ['%s', '%d','%d','%d','%f'], header = 'ID,DAB,Hemotaxylin,Background,DAB_ratio')
+
+import pandas as pd 
+ID, DAB, H, B, ratio = zip(*results)
+df = pd.DataFrame({'ID':ID, 'DAB':DAB, 'Hemotaxylin':H,'Background':B, 'DAB_ratio':ratio})
+
