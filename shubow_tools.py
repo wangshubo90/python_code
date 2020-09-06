@@ -485,7 +485,7 @@ def init_transform_best_angle(tar_img, ref_img, angles = None, z_translation = T
     registration_method = sitk.ImageRegistrationMethod()
     registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
-    registration_method.SetMetricSamplingPercentage(0.01)
+    registration_method.SetMetricSamplingPercentage(0.1)
     registration_method.SetInterpolator(sitk.sitkLinear)
 
     # Evaluate the similarity metric using the rotation parameter space sampling, translation remains the same for all.

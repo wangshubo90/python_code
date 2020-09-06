@@ -88,7 +88,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
     registration_method.SetMetricSamplingPercentage(0.20)
     registration_method.SetInterpolator(sitk.sitkLinear)
-    '''
+    
     registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.4,
                                                                 numberOfIterations=500,
                                                                 convergenceMinimumValue=1e-5,
@@ -97,7 +97,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
     registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.3,
                                                             numberOfIterations=500,
                                                             convergenceMinimumValue=1e-6,
-                                                            convergenceWindowSize=10)
+                                                            convergenceWindowSize=10)'''
     
     registration_method.SetOptimizerScalesFromPhysicalShift()
     registration_method.SetShrinkFactorsPerLevel(shrinkFactors = [4,2,1])
