@@ -1,4 +1,4 @@
-#! /home/spl/ml/sitk/bin/python
+#! /home/blue/ml/sitk/bin/python
 
 # -*- coding: utf-8 -*-
 
@@ -11,12 +11,12 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+wkdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
 os.chdir(wkdir)
-masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
-masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um" 
+masterdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
+masteroutput = r"/home/blue/SITK_registered_image_7um" 
 
-refdir = r"/media/spl/D/MicroCT_data/4th batch bone mets loading study/350z Registration week 1/418 week 1left registered"
+refdir = r"/home/blue/SITK_registered_image_14um/418 week 1left registered"
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO, 
@@ -34,22 +34,22 @@ with open("failed.txt", "r") as f :
 retry = [i[:-1] for i in retry]
 '''
 for file in sorted(os.listdir(masterdir))[4:]:
-    if re.search(r"\d{3} (week 0) (left|right) tibia", file): #and file in retry:
+    if re.search(r"\d{3} (week 1) (left|right) tibia", file): #and file in retry:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
         
         if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = False, rmbckgrd=75, z_range=(-500, -100))
+                                sitkimg = False, rmbckgrd=75, z_range=(-500, -80))
             tar_img = sitk.GetImageFromArray(np.flip(tar_img, axis = 2))
         else:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                    sitkimg = True, rmbckgrd=75, z_range=(-500, -100))
+                                    sitkimg = True, rmbckgrd=75, z_range=(-500, -80))
         
         #tar_img = down_scale(tar_img, down_scale_factor=1.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(0,1)])
+        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-4,2)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
