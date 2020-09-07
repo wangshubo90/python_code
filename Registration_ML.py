@@ -27,29 +27,38 @@ ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_
 #ref_img = down_scale(ref_img, down_scale_factor=1.0)
 
 failed_list = []
-'''
-with open("failed.txt", "r") as f :
-    retry = f.readlines()
 
-retry = [i[:-1] for i in retry]
-'''
-for file in sorted(os.listdir(masterdir))[4:]:
-    if re.search(r"\d{3} (week 0) (left|right) tibia", file): #and file in retry:
+with open("failed.txt", "r") as f :
+    retry_file = f.readlines()
+
+retry_list = [i[:-3] for i in retry_file]
+read_range_list = [i[-2] for i in retry_file]
+print(read_range_list)
+for file in sorted(os.listdir(masterdir))[:]:
+    if re.search(r"\d{3} (week 0) (left|right) tibia", file) and file in retry_list:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
         
+        read_range = read_range_list[retry_list.index(file)] # if need adjustment to read_range
+        if read_range == 'u':
+            lower = -470
+            upper = -10
+        elif read_range == 'd' :
+            lower = -520
+            upper = -120
+
         if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                sitkimg = False, rmbckgrd=75, z_range=(-500, -100))
+                                sitkimg = False, rmbckgrd=75, z_range=(lower, upper))
             tar_img = sitk.GetImageFromArray(np.flip(tar_img, axis = 2))
         else:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
-                                    sitkimg = True, rmbckgrd=75, z_range=(-500, -100))
+                                    sitkimg = True, rmbckgrd=75, z_range=(lower, upper))
         
         #tar_img = down_scale(tar_img, down_scale_factor=1.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(0,1)])
+        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-5,1)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
@@ -76,6 +85,6 @@ for file in sorted(os.listdir(masterdir))[4:]:
 
 print(failed_list)
 
-with open("failed.txt", "w") as f:
+with open("failed_retry.txt", "w") as f:
     for i in failed_list:
         f.write(i+"\n")
