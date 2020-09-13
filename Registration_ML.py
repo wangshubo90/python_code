@@ -1,4 +1,4 @@
-#! /home/spl/ml/sitk/bin/python
+#! /home/blue/ml/sitk/bin/python
 
 # -*- coding: utf-8 -*-
 
@@ -11,10 +11,10 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+wkdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
 os.chdir(wkdir)
-masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
-masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um" 
+masterdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
+masteroutput = r"/home/blue/SITK_registered_image_7um" 
 
 refdir = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um/348 week 3 left tibia registered"
 
