@@ -11,9 +11,9 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
+wkdir = r"/home/blue/SITK_registered_image_14um/3rd batch tibia"
 os.chdir(wkdir)
-masterdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
+masterdir = r"/home/blue/SITK_registered_image_14um/3rd batch tibia"
 masteroutput = r"/home/blue/SITK_registered_image_7um" 
 
 refdir = r"/home/blue/SITK_registered_image_14um/418 week 1left registered"
@@ -23,7 +23,7 @@ logging.basicConfig(format = format, level = logging.INFO,
                     datefmt="%H:%M:%S")
 logging.info('Loading reference image...')
 
-ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-756,None])
+#ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-756,None])
 #ref_img = down_scale(ref_img, down_scale_factor=1.0)
 
 failed_list = []
@@ -31,21 +31,28 @@ failed_list = []
 with open("failed.txt", "r") as f :
     retry_file = f.readlines()
 
-retry_list = [i[:-3] for i in retry_file]
-read_range_list = [i[-2] for i in retry_file]
+retry_list = [i[:-1] for i in retry_file]
+#read_range_list = [i[-2] for i in retry_file]
 
 for file in sorted(os.listdir(masterdir))[:]:
-    if re.search(r"\d{3} (week 0) (left|right) tibia", file) and file in retry_list:
+    if re.search(r"\d{3} (week 4) (left|right) tibia", file) and file in retry_list:
         imgtitle = file
         logging.info('Loading image {} ...'.format(imgtitle))
         
+        ref_img = os.path.join(masteroutput, re.sub(r"week [2-5]", "week 1", file)+' registered')
+        ref_img = imreadseq_multithread(ref_img, sitkimg=True, rmbckgrd=75, z_range=[-350, None])
+
+        '''
         read_range = read_range_list[retry_list.index(file)] # if need adjustment to read_range
         if read_range == 'u':
-            lower = -470
-            upper = -10
+            lower = -510
+            upper = -60
         elif read_range == 'd' :
-            lower = -520
-            upper = -120
+            lower = -560
+            upper = -90
+        '''
+        lower = -600
+        upper = -150
 
         if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
@@ -58,7 +65,7 @@ for file in sorted(os.listdir(masterdir))[:]:
         #tar_img = down_scale(tar_img, down_scale_factor=1.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-5,1)])
+        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-2,1)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
