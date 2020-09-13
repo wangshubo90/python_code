@@ -80,17 +80,17 @@ def cent_transform (ref_img,tar_img):
     return initial_transform
 
 # registration transform
-def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
+def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput, resample_ref = None):
       # get sitk image from folderID
     registration_method = sitk.ImageRegistrationMethod()
     # Similarity metric settings.
     registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
-    registration_method.SetMetricSamplingPercentage(0.20)
+    registration_method.SetMetricSamplingPercentage(0.40)
     registration_method.SetInterpolator(sitk.sitkLinear)
     
-    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.4,
-                                                                numberOfIterations=500,
+    registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.3,
+                                                                numberOfIterations=200,
                                                                 convergenceMinimumValue=1e-5,
                                                                convergenceWindowSize=5)
     '''
@@ -112,7 +112,11 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput):
     registration_method.AddCommand(sitk.sitkIterationEvent, lambda: update_metric_values(registration_method))
 
     final_transform = registration_method.Execute(sitk.Cast(ref_img, sitk.sitkFloat32), sitk.Cast(tar_img, sitk.sitkFloat32))
-    tar_resampled = sitk.Resample(tar_img, ref_img, final_transform, sitk.sitkLinear, 0.0, tar_img.GetPixelID())
+    
+    if resample_ref is None:
+        resample_ref = ref_img
+        
+    tar_resampled = sitk.Resample(tar_img, resample_ref, final_transform, sitk.sitkLinear, 0.0, tar_img.GetPixelID())
     return tar_resampled, final_transform
 
 if __name__ == "__main__":
