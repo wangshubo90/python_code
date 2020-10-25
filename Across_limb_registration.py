@@ -106,7 +106,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput, resample_r
     # or can do initial transform in place
     registration_method.SetInitialTransform(ini_transform, inPlace=False)
 
-    registration_method.AddCommand(sitk.sitkStartEvent, start_plot)/media/spl/D/MicroCT_data/4th batch bone mets loading study/350z Registration week 1/
+    registration_method.AddCommand(sitk.sitkStartEvent, start_plot)
     registration_method.AddCommand(sitk.sitkEndEvent, lambda: end_plot(imgtitle,suboutput))
     registration_method.AddCommand(sitk.sitkMultiResolutionIterationEvent, update_multires_iterations) 
     registration_method.AddCommand(sitk.sitkIterationEvent, lambda: update_metric_values(registration_method))

@@ -11,10 +11,10 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
+wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
 os.chdir(wkdir)
-masterdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
-masteroutput = r"/home/blue/SITK_registered_image_7um" 
+masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um" 
 
 refdir = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um/348 week 3 left tibia registered"
 
@@ -40,7 +40,7 @@ for file in sorted(os.listdir(masterdir)):
         
         logging.info('Loading reference image...')
         ref_img = imreadseq_multithread(os.path.join(masteroutput, re.sub(r"week 3", "week 0",file)+' registered')\
-            ,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-400,None])
+            ,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-350,None])
 
         logging.info('Loading image {} ...'.format(imgtitle))
 
@@ -54,8 +54,9 @@ for file in sorted(os.listdir(masterdir)):
             upper = -120
         '''
 
-        lower = -520
-        upper = -170
+        lower = -550
+        upper = -100
+
         if 'right' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
                                 sitkimg = False, rmbckgrd=75, z_range=(lower, upper))
@@ -67,8 +68,8 @@ for file in sorted(os.listdir(masterdir)):
         #tar_img = down_scale(tar_img, down_scale_factor=1.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(sitk.Cast(tar_img[100:,:,:], sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32),
-                angles=[np.pi*i/8 for i in range(-2,-1)])
+        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32),
+                angles=[np.pi*i/8 for i in range(-3,1)])
         #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
         metric_values = []
         multires_iterations = []
