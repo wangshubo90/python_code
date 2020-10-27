@@ -8,25 +8,21 @@ import sys
 from pathlib import Path
 import re
 from shubow_tools import imreadseq_multithread
+import glob
 
-if len(sys.argv) == 1:
-    dir = Path.cwd()
-elif len(sys.argv) == 2:
-    dir = sys.argv[1]
-    tar = Path.cwd()
-elif len(sys.argv) == 3:
-    dir, tar = sys.argv[1:]
+src = r'/media/spl/D/MicroCT_data/4th batch bone mets loading study'
+dst = r'/run/user/1000/gvfs/afp-volume:host=Lywanglab.local,user=shubow,volume=Micro_CT_Data/Deep learning project/7_um_data'
+os.chdir(src)
 
-pat = re.compile(r"(\d{3}).(week.\d).(left|right)")
+for wk in glob.glob('Registration week*'):
+    os.chdir(wk)
 
-for fd in os.listdir(dir):
-    name = pat.match(fd)
-    if not name is None:
-        animalET=name.group(1)
-        LR = name.group(3)[0].capitalize()+"T"
-        time = name.group(2)[-1]
-        ID = animalET+LR+"_w"+time
-        img = imreadseq_multithread(os.path.join(dir,fd),rmbckgrd=65)
-        sitk.WriteImage(img,os.path.join(tar,ID+".nii"))
-    else:
-        pass
+    for fd in glob.glob('*registered'):
+        print('reading: ' + fd)
+        s = re.search(r'(\d{3}) week (\d) (left|right)', fd)
+        name = '{}{}T_w{}'.format(s.group(1),s.group(3)[0].upper(), s.group(2))
+        img = imreadseq_multithread(fd, z_range=[-300,None])
+        sitk.WriteImage(img, os.path.join(dst,name+'.nii.gz'))
+        print(name + '.nii.gz saved')
+
+    os.chdir('..')
