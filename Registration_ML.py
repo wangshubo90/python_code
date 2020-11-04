@@ -11,12 +11,12 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/home/blue/SITK_registered_image_14um/3rd batch tibia"
+wkdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
 os.chdir(wkdir)
-masterdir = r"/home/blue/SITK_registered_image_14um/3rd batch tibia"
+masterdir = r"/home/blue/SITK_registered_image_14um/2nd batch tibia"
 masteroutput = r"/home/blue/SITK_registered_image_7um" 
 
-refdir = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um/348 week 3 left tibia registered"
+#refdir = r"/home/blue/SITK_registered_image_14um/418 week 1left registered/M91 week 2 left tibia registered"
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO,
@@ -28,7 +28,7 @@ logging.basicConfig(format = format, level = logging.INFO,
 
 failed_list = []
 
-with open("failed_retry.txt", "r") as f :
+with open("failed.txt", "r") as f :
     retry_file = f.readlines()
 
 retry_list = [i[:-3] for i in retry_file]
@@ -44,15 +44,16 @@ for file in sorted(os.listdir(masterdir))[:]:
         
         read_range = read_range_list[retry_list.index(file)] # if need adjustment to read_range
         if read_range == 'u':
-            lower = -510
-            upper = -10
+            lower = -560
+            upper = -40
         elif read_range == 'd' :
-            lower = -550
-            upper = -100
-        elif read_range =="f":
-            flip = False
-            lower = -500
-            upper = -60
+            lower = -630
+            upper = -800
+        
+        flip = False if read_range == "f" else True
+
+        lower = -630
+        upper = -80
 
         if 'right' in file and flip:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
@@ -65,22 +66,22 @@ for file in sorted(os.listdir(masterdir))[:]:
         #tar_img = down_scale(tar_img, down_scale_factor=1.0)
 
         logging.info('Initial Transforming ...')
-        ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-2,1)])
-        #ini_transform = sitk.ReadTransform("/media/spl/D/MicroCT_data/Machine learning/Heart inj Aug-2019 tibia registration/381 week 0 left tibia registered/381 week 0 left tibiareg_transform.tfm")
+        #ini_transform = init_transform_best_angle(sitk.Cast(tar_img, sitk.sitkFloat32),sitk.Cast(ref_img, sitk.sitkFloat32), angles=[np.pi*i/8 for i in range(-2,1)])
+        ini_transform = sitk.ReadTransform(os.path.join(masterdir, imgtitle, imgtitle+".tfm"))
         metric_values = []
         multires_iterations = []
 
         suboutput = os.path.join(masteroutput,imgtitle+" registered")
         logging.info('Registration of {} is in process...'.format(imgtitle))
 
-        if os.path.exists(suboutput):
-            shutil.rmtree(suboutput)
-        
-        os.mkdir(suboutput)
-
         try:
             tar_reg,tar_reg_transform = reg_transform(ref_img,tar_img[100:,:,:],ini_transform,imgtitle,suboutput)
             logging.info("Saving images...")
+            
+            if os.path.exists(suboutput):
+                shutil.rmtree(suboutput)
+            os.mkdir(suboutput)
+            
             imsaveseq(tar_reg, suboutput, imgtitle+'_Reg')
             sitk.WriteTransform(tar_reg_transform,os.path.join(suboutput,imgtitle+'reg_transform.tfm'))
             logging.info('Registration of {} is in completed...'.format(imgtitle))
@@ -92,6 +93,6 @@ for file in sorted(os.listdir(masterdir))[:]:
 
 print(failed_list)
 
-with open("failed.txt", "w") as f:
+with open("failed_retry.txt", "w") as f:
     for i in failed_list:
         f.write(i+"\n")
