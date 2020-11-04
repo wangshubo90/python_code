@@ -114,7 +114,7 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Treadmill35 Reconstruction/Treadmill week 1 reconstruction'
+    masterfolder = r'/run/user/1000/gvfs/smb-share:server=lywanglab.local,share=micro_ct_data/Micro CT reconstruction/Treadmill35 Reconstruction/Treadmill week 1 Reconstruction'
     masterout = r'/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia'
     time1 = time.time()
     count = 0
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     #for inputfd in glob.glob(os.path.join(masterfolder,"*reconstruction")):
     for folder in sorted(os.listdir(masterfolder))[:]:
-        if folder[0:10] in ['360 week 1', '361 week 1', '362 week 1', '363 week 1', '364 week 1', '365 week 1', '366 week 1']:
+        if folder[0:10] in ['372 week 1', '372 week 3']:
             count += 1
             ID = os.path.basename(folder)[0:10]
             logging.info('Cropping for {} started.'.format(ID))

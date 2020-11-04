@@ -11,53 +11,51 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+wkdir = r"/media/spl/D/MicroCT_data/Sep-2018 Heart Inj Tibia and femur"
 os.chdir(wkdir)
-masterdir = r"/media/spl/D/MicroCT_data/Machine learning/Treadmill running 35n tibia"
+masterdir = r"/media/spl/D/MicroCT_data/Sep-2018 Heart Inj Tibia and femur"
 masteroutput = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um" 
 
-refdir = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um/348 week 3 left tibia registered"
+#refdir = r"/media/spl/D/MicroCT_data/Machine learning/SITK_reg_7um/348 week 0 left tibia registered"
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO,
                     datefmt="%H:%M:%S")
 #logging.info('Loading reference image...')
 
-#ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-756,None])
+#ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-350,None])
 #ref_img = down_scale(ref_img, down_scale_factor=1.0)
 
 failed_list = []
 
-with open("failed_retry.txt", "r") as f :
+with open("failed.txt", "r") as f :
     retry_file = f.readlines()
 
-retry_list = [i[:-1] for i in retry_file]
-#read_range_list = [i[-2] for i in retry_file]
+retry_list = [i[:-3] for i in retry_file]
+read_range_list = [i[-2] for i in retry_file]
 
 for file in sorted(os.listdir(masterdir)):
-    if re.search(r"\d{3} (week 3) (left|right) tibia", file) and file in retry_list:
+    if re.search(r"\d{3} (week [2-5]) (left|right) tibia", file) and file in retry_list:
         imgtitle = file
         
         logging.info('Loading reference image...')
-        ref_img = imreadseq_multithread(os.path.join(masteroutput, re.sub(r"week 3", "week 0",file)+' registered')\
+        ref_img = imreadseq_multithread(os.path.join(masteroutput, re.sub(r"week [2-5]", "week 1",file)+' registered')\
             ,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-350,None])
 
         logging.info('Loading image {} ...'.format(imgtitle))
-
-        '''
+        
         read_range = read_range_list[retry_list.index(file)] # if need adjustment to read_range
         if read_range == 'u':
-            lower = -510
-            upper = -40
+            lower = -500
+            upper = -1
         elif read_range == 'd' :
-            lower = -520
+            lower = -600
             upper = -120
-        '''
+        
+        '''lower = -550
+        upper = -80'''
 
-        lower = -550
-        upper = -100
-
-        if 'right' in file:
+        if '__right__' in file:
             tar_img = imreadseq_multithread(os.path.join(masterdir,file), thread=2,
                                 sitkimg = False, rmbckgrd=75, z_range=(lower, upper))
             tar_img = sitk.GetImageFromArray(np.flip(tar_img, axis = 2))
@@ -96,6 +94,6 @@ for file in sorted(os.listdir(masterdir)):
 
 print(failed_list)
 
-with open("failed.txt", "w") as f:
+with open("failed_retry.txt", "w") as f:
     for i in failed_list:
         f.write(i+"\n")
