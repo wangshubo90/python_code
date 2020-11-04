@@ -86,7 +86,7 @@ def reg_transform(ref_img,tar_img, ini_transform, imgtitle,suboutput, resample_r
     # Similarity metric settings.
     registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     registration_method.SetMetricSamplingStrategy(registration_method.RANDOM)
-    registration_method.SetMetricSamplingPercentage(0.40)
+    registration_method.SetMetricSamplingPercentage(0.3)
     registration_method.SetInterpolator(sitk.sitkLinear)
     
     registration_method.SetOptimizerAsGradientDescentLineSearch(learningRate=1.3,
