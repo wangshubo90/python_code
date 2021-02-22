@@ -1,4 +1,4 @@
-#! /home/spl/ml/ihc/bin/python
+#! /home/spl/ml/sitk/bin/python
 
 # -*- coding: utf-8 -*-
 
