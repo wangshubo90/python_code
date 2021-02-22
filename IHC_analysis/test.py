@@ -19,7 +19,7 @@ def __define_conv_matrix(stains = ['hematoxylin', 'dab','null']):
     conv_matrix = conv_matrix = np.array([stain_color_map[st] for st in stains]).T
     return conv_matrix
 
-def color_deconvolution(image, conv_matrix, output_dir="."):
+def color_deconvolution(image, conv_matrix):
     image = cv2.GaussianBlur(image, (3,3), 0)
     img_deconvolved = htk.preprocessing.color_deconvolution.color_deconvolution(image, conv_matrix)
 
