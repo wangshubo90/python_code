@@ -12,12 +12,15 @@ import re
 import logging
 import concurrent.futures
 from pathlib import Path
+import shutil
 
 def extractmsk(img,mask):
     
-    mask = np.where(mask>0,1,0)
-    img = img * mask
-    
+    #mask = np.where(mask>0,1,0)
+    #img = img * mask
+    mask = mask > 0
+    img = img*mask
+
     return img
     
 def mkcomposite(refimg, tarimg, mask = None):
@@ -57,14 +60,17 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     comptitle = tartitle[:-11] + ' w{}w{}composite'.format(0,tarwk.group(1))
     outdir = os.path.join(outputmasterdir,comptitle)
     
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+    if os.path.exists(outdir):
+        shutil.rmtree(outdir)
+
+    os.mkdir(outdir)
+
     refimg = imreadseq(refdir,sitkimg=False,rmbckgrd=75)
     tarimg = imreadseq(tardir,sitkimg=False,rmbckgrd=75)
     
     composite = mkcomposite(refimg,tarimg,mask=mask)
     
-    imsaveseq(composite,outdir,comptitle,sitkimages=False,idx_start=451)
+    imsaveseq(composite,outdir,comptitle,sitkimages=False)
     logging.info('Thread finished for '+comptitle)
 
 if __name__ == "__main__":
@@ -74,18 +80,19 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+ref+"_thred75") #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','VOI450-590_Registered femur '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(r'F:\MicroCT data\Yoda1 small batch\Tibia Femur fully seg','femur w{}w{}composite_450-590_thred75'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
-    #tibia_only_mask = imreadseq('/media/spl/D/MicroCT data/4th batch bone mets loading study/Ref_tibia_ROI',sitkimg=False)
+    
+    tibia_only_mask = imreadseq(r'E:\Yoda1-tumor 1.24.2020\Tibia-ROI2', sitkimg=False)
 
     tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
     compdirls = [outputmasterdir]*len(tardirls)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers = 3) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers = 4) as executor:
         logging.info('ProcessPool started')
-        executor.map(batch_mkcomp, tardirls, compdirls)
+        executor.map(batch_mkcomp, tardirls, compdirls, [tibia_only_mask]*len(tardirls))
 
     logging.info('Done!')
