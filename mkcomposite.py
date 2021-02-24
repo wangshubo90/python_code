@@ -80,13 +80,13 @@ if __name__ == "__main__":
 
     ref = 'week 0'
     tar = 'week 3'
-    refimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+ref) #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
+    refimgmasterdir = os.path.join(r'/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020','Registered '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join(r'/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020','Registered '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(r'/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     
-    tibia_only_mask = imreadseq(r'E:\Yoda1-tumor 1.24.2020\Tibia-ROI2', sitkimg=False)
+    tibia_only_mask = imreadseq(r'/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia-ROI2', sitkimg=False)
 
     tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
     compdirls = [outputmasterdir]*len(tardirls)

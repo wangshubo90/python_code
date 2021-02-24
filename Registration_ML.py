@@ -11,19 +11,19 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia femur split week 0"
+wkdir = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia femur split week 3"
 os.chdir(wkdir)
-masterdir = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia femur split week 0"
-masteroutput = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Registered week 0" 
+masterdir = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Tibia femur split week 3"
+masteroutput = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Registered week 3" 
 
-refdir = r"/media/shubow/Seagate MicroCT/Tibia_Ref_tif"
+refdir = r"/media/shubow/Seagate MicroCT/Yoda1-tumor 1.24.2020/Registered week 0"
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO,
                     datefmt="%H:%M:%S")
-logging.info('Loading reference image...')
 
-ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, z_range=[-350,None])
+#logging.info('Loading reference image...')
+#ref_img = imreadseq_multithread(refdir,thread = 2, sitkimg=True, z_range=[-350,None])
 #ref_img = down_scale(ref_img, down_scale_factor=1.0)
 
 failed_list = []
@@ -35,12 +35,12 @@ retry_list = [i[:-3] for i in retry_file]
 read_range_list = [i[-2] for i in retry_file]'''
 
 for file in sorted(os.listdir(masterdir)):
-    if re.search(r"\d{3}.(week.0) (left|right) tibia", file) : #and file in retry_list:
+    if re.search(r"\d{3}.(week.3) (left|right) tibia", file) : #and file in retry_list:
         imgtitle = file
         
         logging.info('Loading reference image...')
-        #ref_img = imreadseq_multithread(os.path.join(masteroutput, re.sub(r"week [2-5]", "week 1",file)+' registered')\
-        #    ,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-350,None])
+        ref_img = imreadseq_multithread(os.path.join(refdir, re.sub(r".week.[2-5]", "_week_0",file)+' registered')\
+            ,thread = 2, sitkimg=True, rmbckgrd=75, z_range=[-350,None])
 
         logging.info('Loading image {} ...'.format(imgtitle))
         
