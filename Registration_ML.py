@@ -25,7 +25,6 @@ if not os.path.exists(masteroutput):
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(format = format, level = logging.INFO,
                     datefmt="%H:%M:%S")
-logging.info('Loading reference image...')
 
 if not BASELINE_REGISTRATION:
     logging.info('Loading reference image...')
