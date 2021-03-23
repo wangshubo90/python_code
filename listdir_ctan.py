@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import logging
+
 if len(sys.argv) == 1:
     Masterdir = Path.cwd()
 else:
@@ -25,7 +26,7 @@ logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 with open(ctan_list,'a') as thefile:
     thefile.write('[Dataset list]\n')
     for folder in sorted(os.listdir(Masterdir)):
-        if os.path.isdir(os.path.join(Masterdir,folder)) and "composite" in folder:
+        if os.path.isdir(os.path.join(Masterdir,folder)) :#and "composite" in folder:
             file =os.path.join(Masterdir,folder,os.listdir(os.path.join(Masterdir,folder))[10])
             thefile.write('Next=@{:d}\n'.format(i))
             thefile.write('[@{:d}]\n'.format(i))

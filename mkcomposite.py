@@ -31,10 +31,14 @@ def mkcomposite(refimg, tarimg, mask = None):
                 mask, ndarray with the same shape as refimg. Default value is None.
     Returns:    comp, ndarray with the shape as refimg
     Note:
-                tar only 120-0+120 = 240
+                tar only .0
+                .....................................-0+120 = 240
                 ref only 0-60+120 = 60
                 tar-ref overlavp = 120-60+120 = 180
                 background = 0-0+120 = 120  -->> 0
+
+                tar [80 : 255]
+                ref [(1-60) : (180-240)]
     '''
     if not mask is None:
         [refimg, tarimg] = [extractmsk(img,mask) for img in [refimg,tarimg]]
@@ -65,8 +69,8 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
 
     os.mkdir(outdir)
 
-    refimg = imreadseq(refdir,sitkimg=False,rmbckgrd=75)
-    tarimg = imreadseq(tardir,sitkimg=False,rmbckgrd=75)
+    refimg = imreadseq(refdir,sitkimg=False,rmbckgrd=75, z_range=(-300,None))
+    tarimg = imreadseq(tardir,sitkimg=False,rmbckgrd=75, z_range=(-300,None))
     
     composite = mkcomposite(refimg,tarimg,mask=mask)
     
@@ -79,19 +83,20 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
     ref = 'week 0'
-    tar = 'week 3'
-    refimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+ref) #pylint: disable=anomalous-backslash-in-string
-    tarimgmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Registered '+tar) #pylint: disable=anomalous-backslash-in-string
-    outputmasterdir = os.path.join(r'E:\Yoda1-tumor 1.24.2020','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
+    tar = 'week 2'
+    refimgmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Registration '+ref) #pylint: disable=anomalous-backslash-in-string
+    tarimgmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Registration '+tar) #pylint: disable=anomalous-backslash-in-string
+    outputmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
+
     if not os.path.exists(outputmasterdir):
         os.mkdir(outputmasterdir)
     
-    tibia_only_mask = imreadseq(r'E:\Yoda1-tumor 1.24.2020\Tibia-ROI2', sitkimg=False)
+    tibia_only_mask = imreadseq(r'E:\Yoda1-tumor 1.24.2020\Tibia-ROI2', sitkimg=False, z_range=(-300,None)) # if not needed, set this to None
 
-    tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 3',i)]
+    tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 2',i)]
     compdirls = [outputmasterdir]*len(tardirls)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers = 4) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers = 2) as executor:
         logging.info('ProcessPool started')
         executor.map(batch_mkcomp, tardirls, compdirls, [tibia_only_mask]*len(tardirls))
 

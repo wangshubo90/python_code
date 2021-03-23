@@ -28,7 +28,7 @@ for folder in os.listdir(masterdir):
         images = [image for image in sorted(glob.glob(os.path.join(masterdir,folder,'*'))) 
                     if re.search(r"(00\d{4,6}).(tif|bmp|png)$",image)]
         try:
-            distal=images[-300]
+            distal=images[-299]
             midline = images[int(len(images)*0.7)]
             proximal=images[-1]
             sampleimg = [proximal,distal,midline]
