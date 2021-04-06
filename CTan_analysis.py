@@ -7,69 +7,80 @@ import numpy as np
 import os
 import re
 
+def get_metadata(dataframe, col="Dataset", pattern=None, groups=None):
 
-os.chdir(r'F:\CTan analysis\Yoda1 small batch')
+    """
+    Desctiption: Get metadata from a given column in dataframe
+        dataframe: Pandas dataframe
+        col: column name
+        pattern: re search pattern
+    """
+    if pattern == None:
+        pattern = re.compile(r"(\d{3}).(week.\d).(left tibia|right tibia)")
+
+    sample_list = []
+
+    for sample in iter(dataframe[col]):
+        sample_list.append(pattern.search(sample).groups())
+
+    animal, time, LR = zip(*sample_list)
+
+    dataframe.insert(0, "Limb", LR)
+    dataframe.insert(0, "time (wk)", time)
+    dataframe.insert(0, "Animal ET", animal)
+    dataframe.insert(3, "Long name", list(map(lambda x,y: x+" "+y, animal,LR)))
+
+    if not groups == None:
+        
+
+    return dataframe
 
 def read_ctan(file): 
     df = pd.read_csv(file,sep=",", header =1,
-                usecols=[0,6,7,8,14,15,44],skiprows=[2,3])
+                usecols=[0,6,7,8,14,15,16, 17,44], skiprows=[2,3])
     return df
 
+if __name__ == "__main__":
+    os.chdir(r'C:\Users\wangs\Google Drive\Yoda1 project')
+    
+    files = [
+        [
+            "Cortical bone w0 3.16.2021 Yoda1 tumor loading.txt",
+            "Cortical bone w1 3.16.2021 Yoda1 tumor loading.txt",
+            "Cortical bone w2 3.19.2021 Yoda1 tumor loading.txt"
+        ],
+        [
+            "Trabecular bone w0 3.16.2021 Yoda1 tumor loading.txt",
+            "Trabecular bone w1 3.16.2021 Yoda1 tumor loading.txt",
+            "Trabecular bone w2 3.19.2021 Yoda1 tumor loading.txt"
+        ]
+    ]
 
-femur_w0 = read_ctan(r'femural cortex week 0 thred75 Yoda1 small batch 2.13.2020_rereg.txt')
-femur_w3 = read_ctan(r'femural cortex week 3 thred75 Yoda1 small batch 2.13.2020_rereg.txt')
-tibia_w0 = read_ctan(r'tibial cortex week 0 thred75 Yoda1 small batch 2.13.2020.txt')
-tibia_w3 = read_ctan(r'tibial cortex week 3 thred75 Yoda1 small batch 2.13.2020.txt')
+    sheet_names = [
+        "Cort",
+        "Trab"
+    ]
 
-dtype=["str",'float32','float32','float32','float32','float32','float32'] 
-dtypedict={}
-for i, colname in enumerate(femur_w0.columns):
-    dtypedict[colname]=dtype[i]
+    output_excel = "Yoda1 Tumor Loading Microct results.xlsx"
 
-femur_w0 = femur_w0.astype(dtypedict)
-femur_w3 = femur_w3.astype(dtypedict)
-tibia_w0 = tibia_w0.astype(dtypedict)
-tibia_w3 = tibia_w3.astype(dtypedict)
+    with pd.ExcelWriter(output_excel) as writer:
+        for file_list,sheet in zip(files, sheet_names):
+            for file in file_list:
+                df = read_ctan(file)
+                df = get_metadata(df)
+                
+                try:
+                    startrow = writer.sheets[sheet].max_row
+                except KeyError:
+                    startrow = 0
 
-pattern = re.compile(r"(\d{3}).(week.\d).(left|right)")
-sample_list = []
-for sample in iter(femur_w0.Dataset):
-    sample_list.append(pattern.search(sample).groups())
+                header = True if startrow == 0 else False
 
-animal, time, LR = zip(*sample_list)
+                df.to_excel(
+                        writer, 
+                        sheet_name = sheet, 
+                        index=False,
+                        header=header,
+                        startrow=startrow
 
-femur_w0['Dataset'] = list(map(lambda x,y: x+" "+y, animal,LR))
-femur_w3['Dataset'] = list(map(lambda x,y: x+" "+y, animal,LR))
-tibia_w0['Dataset'] = list(map(lambda x,y: x+" "+y, animal,LR))
-tibia_w3['Dataset'] = list(map(lambda x,y: x+" "+y, animal,LR))
-
-group = ["Yoda1", "Control"]
-group = [group[i] for i in [0,0,1,1,0,0,1] for _ in (0,1)]
-sex = ["Male","Female"]
-sex = [sex[i] for i in [0,0,0,0,0,1,1] for _ in (0,1)]
-
-femur_w0.insert(1,"Time",time)
-femur_w3.insert(1,"Time",time)
-tibia_w0.insert(1,"Time",time)
-tibia_w3.insert(1,"Time",time)
-
-femur_w0.insert(1,"Group",group)
-femur_w3.insert(1,"Group",group)
-tibia_w0.insert(1,"Group",group)
-tibia_w3.insert(1,"Group",group)
-
-femur_w0.insert(1,"Sex",sex)
-femur_w3.insert(1,"Sex",sex)
-tibia_w0.insert(1,"Sex",sex)
-tibia_w3.insert(1,"Sex",sex)
-
-femur_w0=femur_w0.sort_values(by = ["Sex","Group"])
-femur_w3=femur_w3.sort_values(by = ["Sex","Group"])
-tibia_w0=tibia_w0.sort_values(by = ["Sex","Group"])
-tibia_w3=tibia_w3.sort_values(by = ["Sex","Group"])
-
-with pd.ExcelWriter("Yoda1_CTan_results_thred75_rereg.xlsx") as writer:
-    femur_w0.to_excel(writer, sheet_name = "Femur week 0")
-    femur_w3.to_excel(writer, sheet_name = "Femur week 3")
-    tibia_w0.to_excel(writer, sheet_name = "Tibia week 0")
-    tibia_w3.to_excel(writer, sheet_name = "Tibia week 3")
+            )
