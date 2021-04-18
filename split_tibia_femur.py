@@ -114,8 +114,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'E:\Yoda1-tumor-loading 2.26.2021\Reconstruction week 3'
-    masterout = r'E:\Yoda1-tumor-loading 2.26.2021\Tibia & femur week 3'
+    masterfolder = r'E:\Yoda1-tumor-loading batch 2\Reconstruction week 1'
+    masterout = r'E:\Yoda1-tumor-loading batch 2\Tibia & femur week 0'
 
     if not os.path.exists(masterout):
         os.mkdir(masterout)
