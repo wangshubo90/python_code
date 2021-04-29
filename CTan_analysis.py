@@ -7,7 +7,7 @@ import numpy as np
 import os
 import re
 
-def get_metadata(dataframe, col="Dataset", pattern=None, groups=None):
+def get_metadata(dataframe, col="Dataset", pattern=None, groupdf=None):
 
     """
     Desctiption: Get metadata from a given column in dataframe
@@ -28,10 +28,10 @@ def get_metadata(dataframe, col="Dataset", pattern=None, groups=None):
     dataframe.insert(0, "Limb", LR)
     dataframe.insert(0, "time (wk)", time)
     dataframe.insert(0, "Animal ET", animal)
-    dataframe.insert(3, "Long name", list(map(lambda x,y: x+" "+y, animal,LR)))
+    dataframe.insert(3, "LongName", list(map(lambda x,y: x+" "+y, animal,LR)))
 
-    if not groups == None:
-        
+    if not groupdf is None:
+        dataframe=pd.merge(dataframe, groupdf, on="LongName", validate="m:1")
 
     return dataframe
 
@@ -45,29 +45,34 @@ if __name__ == "__main__":
     
     files = [
         [
-            "Cortical bone w0 3.16.2021 Yoda1 tumor loading.txt",
-            "Cortical bone w1 3.16.2021 Yoda1 tumor loading.txt",
-            "Cortical bone w2 3.19.2021 Yoda1 tumor loading.txt"
-        ],
-        [
-            "Trabecular bone w0 3.16.2021 Yoda1 tumor loading.txt",
-            "Trabecular bone w1 3.16.2021 Yoda1 tumor loading.txt",
-            "Trabecular bone w2 3.19.2021 Yoda1 tumor loading.txt"
-        ]
-    ]
+            "Cortical bone lesions week 1 4.19.2021.txt",
+            "Cortical bone lesions week 2 4.19.2021.txt",
+            "Cortical bone lesions week 3 4.19.2021.txt",
+            "Cortical bone lesions week 4 4.19.2021.txt"
+        ]]
+    #     [
+    #         "Trabecular bone w0 3.16.2021 Yoda1 tumor loading.txt",
+    #         "Trabecular bone w1 3.16.2021 Yoda1 tumor loading.txt",
+    #         "Trabecular bone w2 3.19.2021 Yoda1 tumor loading.txt",
+    #         "Trabecular bone w3 4.18.2021 Yoda1 tumor loading.txt",
+    #         "Trabecular bone w4 4.18.2021 Yoda1 tumor loading.txt"
+    #     ]
+    # ]
+    sheet_names = ['Cort Lesion']
+    # sheet_names = [
+    #     "Cort",
+    #     "Trab"
+    # ]
 
-    sheet_names = [
-        "Cort",
-        "Trab"
-    ]
+    output_excel = "Yoda1 Tumor Loading Microct results Cort Lesion.xlsx"
+    groupdf = pd.read_excel(r"C:\Users\wangs\Google Drive\Yoda1 project\Yoda1 Loading Tumor Perforation Analysis.xlsx", usecols=range(5), header=0)
 
-    output_excel = "Yoda1 Tumor Loading Microct results.xlsx"
 
     with pd.ExcelWriter(output_excel) as writer:
         for file_list,sheet in zip(files, sheet_names):
             for file in file_list:
                 df = read_ctan(file)
-                df = get_metadata(df)
+                df = get_metadata(df, groupdf=groupdf)
                 
                 try:
                     startrow = writer.sheets[sheet].max_row
