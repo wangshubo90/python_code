@@ -11,10 +11,10 @@ from shubow_tools import imreadseq_multithread,imsaveseq, auto_crop, down_scale,
 import shutil
 import numpy as np
 
-wkdir = r"E:\Yoda1-tumor-loading 2.26.2021\Tibia & femur week 3"
+wkdir = r"E:\Yoda1-tumor-loading 2.26.2021\Tibia & femur week 4"
 os.chdir(wkdir)
-masterdir = r"E:\Yoda1-tumor-loading 2.26.2021\Tibia & femur week 3"
-masteroutput = r"E:\Yoda1-tumor-loading 2.26.2021\Registration week 3" 
+masterdir = r"E:\Yoda1-tumor-loading 2.26.2021\Tibia & femur week 4"
+masteroutput = r"E:\Yoda1-tumor-loading 2.26.2021\Registration week 4" 
 refdir = r"E:\Yoda1-tumor-loading 2.26.2021\Registration week 0"
 
 BASELINE_REGISTRATION = True
@@ -39,7 +39,7 @@ failed_list = []
 retry_list = [i[:-3] for i in retry_file]
 read_range_list = [i[-2] for i in retry_file]'''
 
-for file in sorted(os.listdir(masterdir)):
+for file in sorted(os.listdir(masterdir))[4:]:
     if re.search(r"\d{3}.(week.\d) (left|right) tibia", file):
         imgtitle = file
         

@@ -58,7 +58,7 @@ def batch_mkcomp(tardir,outputmasterdir,mask = None):
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
     logging.info('Thread--{}--started'.format(os.path.basename(tardir)))
     tarwk = re.search(r"week (\d)",tardir)
-    refdir = tardir.replace("week 3","week 0",-1)
+    refdir = tardir.replace("week 4", "week 0",-1)
     tartitle = os.path.basename(tardir)
     logging.info('Thread--{}--mkdir'.format(os.path.basename(tardir)))
     comptitle = tartitle[:-11] + ' w{}w{}composite'.format(0,tarwk.group(1))
@@ -82,8 +82,9 @@ if __name__ == "__main__":
     format = "%(asctime)s: %(message)s"
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
+    global ref, tar
     ref = 'week 0'
-    tar = 'week 2'
+    tar = 'week 4'
     refimgmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Registration '+ref) #pylint: disable=anomalous-backslash-in-string
     tarimgmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Registration '+tar) #pylint: disable=anomalous-backslash-in-string
     outputmasterdir = os.path.join(r'E:\Yoda1-tumor-loading 2.26.2021','Tibia w{}w{}composite'.format(ref[-1],tar[-1]))
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     
     tibia_only_mask = imreadseq(r'E:\Yoda1-tumor 1.24.2020\Tibia-ROI2', sitkimg=False, z_range=(-300,None)) # if not needed, set this to None
 
-    tardirls = [os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search('week 2',i)]
+    tardirls = sorted([os.path.join(tarimgmasterdir,i) for i in os.listdir(tarimgmasterdir) if re.search(tar,i)])[:2]
     compdirls = [outputmasterdir]*len(tardirls)
 
     with concurrent.futures.ProcessPoolExecutor(max_workers = 2) as executor:

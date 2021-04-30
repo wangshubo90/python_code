@@ -2,15 +2,18 @@
 
 # -*- coding: utf-8 -*-
 
-import os
+import os, glob, sys, re
 from pathlib import Path
-import sys
 import logging
 
 if len(sys.argv) == 1:
     Masterdir = Path.cwd()
-else:
+elif len(sys.argv) == 2:
     Masterdir = Path(sys.argv[1])
+    pattern = ""
+elif len(sys.argv) == 3:
+    Masterdir = Path(sys.argv[1])
+    pattern = sys.argv[2]
 
 ctan_list =os.path.join(Masterdir,os.path.basename(Masterdir)+'_CTANlist.ctl')
 info ='Info=0000000001000000FFFF0000000000000000000000000000000000000000000000000000000000000000000000000000E60E993B64EED03F00000000000000000000000000000000000000000000000004000000000000002C'
@@ -23,10 +26,10 @@ format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
 #method 1
-with open(ctan_list,'a') as thefile:
+with open(ctan_list,'w') as thefile:
     thefile.write('[Dataset list]\n')
-    for folder in sorted(os.listdir(Masterdir)):
-        if os.path.isdir(os.path.join(Masterdir,folder)) :#and "composite" in folder:
+    for folder in sorted(os.listdir(os.path.join(Masterdir))):
+        if os.path.isdir(os.path.join(Masterdir,folder)) and re.search(pattern, folder)  :#and "composite" in folder:
             file =os.path.join(Masterdir,folder,os.listdir(os.path.join(Masterdir,folder))[10])
             thefile.write('Next=@{:d}\n'.format(i))
             thefile.write('[@{:d}]\n'.format(i))
@@ -65,5 +68,4 @@ w = open(ctan_list,'w')
 w.writelines(ctan)
 w.close()
 '''
-
 
