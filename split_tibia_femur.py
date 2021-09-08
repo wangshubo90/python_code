@@ -114,8 +114,8 @@ def splitLRTF(folder,imgtitle,outfd = None):
     del right_tibia,right_femur
     
 if __name__ == "__main__":
-    masterfolder = r'E:\Yoda1-tumor-loading batch 2\Reconstruction week 1'
-    masterout = r'E:\Yoda1-tumor-loading batch 2\Tibia & femur week 0'
+    masterfolder = r'D:\MicroCT_data\4th batch bone mets loading study\Reconstruction week 0'
+    masterout = r'D:\MicroCT_data\4th batch bone mets loading study\L & R week 0'
 
     if not os.path.exists(masterout):
         os.mkdir(masterout)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     #for inputfd in glob.glob(os.path.join(masterfolder,"*reconstruction")):
     for folder in sorted(os.listdir(masterfolder)):
-        if folder[0:10]:
+        if folder:
             count += 1
             ID = os.path.basename(folder)[0:10]
             logging.info('Cropping for {} started.'.format(ID)) 
