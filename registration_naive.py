@@ -9,7 +9,12 @@ def findDicomSeries(directory):
     return series_IDs
 
 def imread(data_directory, series_ID):
-    series_file_names = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(data_directory, series_ID)
+    if isinstance(series_ID, list) or isinstance(series_ID, tuple):
+        series_file_names = ()
+        for id in series_ID:
+            series_file_names+=sitk.ImageSeriesReader.GetGDCMSeriesFileNames(data_directory, id)
+    else:
+        series_file_names = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(data_directory, series_ID)
     series_reader = sitk.ImageSeriesReader()
     series_reader.SetFileNames(series_file_names)
     series_reader.MetaDataDictionaryArrayUpdateOn()
@@ -25,8 +30,10 @@ class Registration:
             ref_uid = refIDs[0]
         if tar_uid is None and tarIDs:
             tar_uid = tarIDs[0]
+
         self.ref_img, self.ref_reader = imread(ref_dir, ref_uid)
         self.tar_img, self.tar_reader = imread(tar_dir, tar_uid)
+            
         self.filenames = [os.path.basename(i) for i in self.ref_reader.GetFileNames()]
         self.ref_shape = self.ref_img.GetSize()
         self.tar_shape = self.tar_img.GetSize()
@@ -41,7 +48,14 @@ class Registration:
                                                       sitk.CenteredTransformInitializerFilter.GEOMETRY))
         
         return initial_transform
-        
+    
+    def resampleOnly(self):
+        identity = sitk.Transform(3, sitk.sitkIdentity)
+        self.resampled_tar_img = sitk.Resample(
+            sitk.Cast(self.tar_img, sitk.sitkFloat32), 
+            sitk.Cast(self.ref_img, sitk.sitkFloat32), 
+            identity, sitk.sitkLinear, 0.0, sitk.sitkInt16)
+
     def registration(self):
         registration_method = sitk.ImageRegistrationMethod()
         registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
@@ -75,7 +89,7 @@ class Registration:
     def save_nifti(self):
         return
 
-    def save_dicom(self, output_dir, new_series_n=999):
+    def save_dicom(self, sitkImage, output_dir, new_series_n=999):
         os.makedirs(output_dir, exist_ok=True)
         writer = sitk.ImageFileWriter()
         writer.KeepOriginalImageUIDOn()
@@ -90,7 +104,7 @@ class Registration:
                 "0008|0060"  # Modality
         ]
 
-        direction = self.reg_img.GetDirection()
+        direction = sitkImage.GetDirection()
         modification_time = time.strftime("%H%M%S")
         modification_date = time.strftime("%Y%m%d")        
         series_tag_values = [(k, self.tar_reader.GetMetaData(0,k)) for k in tags_to_copy if self.tar_reader.HasMetaDataKey(0,k)] + \
@@ -107,15 +121,15 @@ class Registration:
                         ("0018|0050", self.ref_reader.GetMetaData(0, "0018|0050")) # SliceThickness
                         ] 
         
-        for i, f in zip(range(self.reg_img.GetDepth()), self.filenames):
-            image_slice = self.reg_img[:,:,i]
+        for i, f in zip(range(sitkImage.GetDepth()), self.filenames):
+            image_slice = sitkImage[:,:,i]
             # Tags shared by the series.
             for tag, value in series_tag_values:
                 image_slice.SetMetaData(tag, value)
             # Slice specific tags.
             image_slice.SetMetaData("0008|0012", time.strftime("%Y%m%d")) # Instance Creation Date
             image_slice.SetMetaData("0008|0013", time.strftime("%H%M%S")) # Instance Creation Time
-            image_slice.SetMetaData("0020|0032", '\\'.join(map(str,self.reg_img.TransformIndexToPhysicalPoint((0,0,i))))) # Image Position (Patient)
+            image_slice.SetMetaData("0020|0032", '\\'.join(map(str,sitkImage.TransformIndexToPhysicalPoint((0,0,i))))) # Image Position (Patient)
             image_slice.SetMetaData("0020,0013", str(i+1)) # Instance Number
 
             # Write to the output directory and add the extension dcm, to force writing in DICOM format.

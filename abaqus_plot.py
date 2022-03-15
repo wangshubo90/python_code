@@ -8,11 +8,14 @@ from scipy import interpolate
 from sklearn.metrics import r2_score
 import matplotlib.transforms as transforms
 
-def plot_force_displacement(data, preddata, title, axes):
+def plot_force_displacement(data, preddata, title, axes, ylim=(0, 50)):
     axes.plot(data["U3"].to_numpy(), data["RF3"].to_numpy(), "-b")
     axes.plot(preddata["U3"].to_numpy(), preddata["RF3"].to_numpy(), "--r")
     axes.set_title(title)
+    axes.set_ylim(bottom=ylim[0], top=ylim[1])
     axes.set_xlim(left=0, right=5000)
+    axes.set_xlabel("Displacement ($\mu\epsilon$)")
+    axes.set_ylabel("Reaction Force (N)")
     axes.relim()
     axes.autoscale_view()
     return axes
@@ -114,8 +117,8 @@ if __name__=="__main__":
         df = data_transform(pd.DataFrame(data), tare_strain=tare_strain)
         pdf = data_transform(pd.DataFrame(preddata), tare_strain=tare_strain)
 
-        # print("--".join([sample_name,str(df.loc[df.shape[0]-1, "U3"]), str(pdf.loc[pdf.shape[0]-1, "U3"])]))
-        # print("--".join([sample_name,str(df.loc[0, "U3"]), str(df.loc[0, "U3"])]))
+        print("--".join([sample_name,str(df.loc[df.shape[0]-1, "U3"]), str(pdf.loc[pdf.shape[0]-1, "U3"])]))
+        print("--".join([sample_name,str(df.loc[0, "U3"]), str(df.loc[0, "U3"])]))
         #====interpolate U3 and RF3====
         dfinterp = interpolate_force(df, newx)
         pdfinterp = interpolate_force(pdf, newx)
@@ -139,12 +142,13 @@ if __name__=="__main__":
 
         #====plot RF3, energy vs U3 for each pair of samples====
         figure, axes = plt.subplots(1, 3, figsize=(12, 3.5))
-        _=plot_force_displacement(df, pdf, "Force vs Displacement", axes[0])
+        _=plot_force_displacement(df, pdf, "Force vs Displacement", axes[0], ylim=(-1, 1.2*max([dfinterp.loc[5000, "RF3"], pdfinterp.loc[5000, "RF3"]])))
         _=energy_fraction(df, pdf, "ALLSD/ALLSE", axes[1])
         _=energy(df, pdf, "ALLSD & ALLSE vs Displacement", axes[2])
 
         plt.tight_layout()
         figure.savefig(dataf.replace(".json", ".png").replace("U3RF3jsons", "U3RF3plots"), dpi=150)
+        # plt.show()
         plt.close()
 
     #====plot RF3-GT vs RF3-pred at different U3 for all samples====
