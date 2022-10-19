@@ -219,41 +219,6 @@
     <string/>
    </property>
   </widget>
-<<<<<<< HEAD
-  <widget class="QCheckBox" name="resampleOnlyCheck">
-   <property name="geometry">
-    <rect>
-     <x>360</x>
-     <y>370</y>
-     <width>121</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Resample Only</string>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="coRegTogCheck">
-   <property name="geometry">
-    <rect>
-     <x>480</x>
-     <y>370</y>
-     <width>111</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>co-Reg as one</string>
-   </property>
-  </widget>
-=======
->>>>>>> origin/master
  </widget>
  <resources/>
  <connections/>

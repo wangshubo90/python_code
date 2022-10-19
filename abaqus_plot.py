@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from sklearn.metrics import r2_score
+from scipy.stats import linregress
 import matplotlib.transforms as transforms
 
 def plot_force_displacement(data, preddata, title, axes, ylim=(0, 50)):
@@ -54,6 +55,12 @@ def interpolate_force(df, newlinspace):
     newdf = pd.DataFrame({"U3":newlinspace, "RF3": newRF3}).set_index("U3")
     return newdf
 
+def _set_label_tick_color(ax:plt.axes, color:str):
+    ax.xaxis.label.set_color('black')
+    ax.tick_params(axis='x', colors=color, labelsize=14)
+    ax.yaxis.label.set_color('black')
+    ax.tick_params(axis='y', colors=color, labelsize=14)
+    
 def plot_scatter_with_trendline(axes, x, y):
     x, y = np.array(x), np.array(y)
     axes.scatter(x,y, c="b")
@@ -64,6 +71,7 @@ def plot_scatter_with_trendline(axes, x, y):
     text = f"$R^2 = {r2_score(y,x):0.3f}$"
     axes.set_ylim(bottom=0)
     axes.set_xlim(left=0)
+    _set_label_tick_color(axes, "black")
 
     axes.text(0.8, 0.8, text,
         fontsize=14, verticalalignment='top')
@@ -73,11 +81,16 @@ def plot_scatter_with_trendline2(axes, x, y):
     axes.scatter(x,y)
     z = np.polyfit(x, y, 1)
     y_hat = np.poly1d(z)(x)
+    x_line = np.linspace(0, max(x), 20)
+    y_line = np.poly1d(z)(x_line)
 
-    axes.plot(x, y_hat, "r--", lw=1)
+    axes.plot(x_line, y_line, "r--", lw=1)
     text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$"
     axes.set_ylim(bottom=0)
     axes.set_xlim(left=0)
+    _set_label_tick_color(axes, "black")
+    axes.set_ylim(bottom=0, top=int(max(x)*1.2))
+    axes.set_xlim(left=0, right=int(max(x)*1.2))
 
     trans = transforms.blended_transform_factory(axes.transData, axes.transAxes)
 
@@ -92,8 +105,35 @@ def findStepByDisplacement(df, U3, n_index=2):
     
     return subdf["step"].to_numpy(), subdf["U3"].to_numpy()
 
+def calc_compliance(x, y, threshold=1.0):
+    
+    x = x[y>threshold]
+    y = y[y>threshold]
+    results = linregress(x , y)
+    return results.slope, results.pvalue
+    
+def plot_scatter_compliances(axes, x, y):
+    axes.scatter(x,y)
+    z = np.polyfit(x, y, 1)
+    y_hat = np.poly1d(z)(x)
+    x_line = np.linspace(0, max(x), 20)
+    y_line = np.poly1d(z)(x_line)
+
+    axes.plot(x_line, y_line, "r--", lw=1)
+    axes.plot(x_line, x_line, "b-", lw=1)
+    text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$"
+    axes.set_xlabel("Compliance ($\mu\epsilon/N$) - GT Model", fontweight="bold", fontsize=16)
+    axes.set_ylabel("Compliance ($\mu\epsilon/N$) - Pred Model",fontweight="bold", fontsize=16)
+    _set_label_tick_color(axes, "black")
+
+    trans = transforms.blended_transform_factory(axes.transData, axes.transAxes)
+
+    axes.text(0.05, 0.95, text, transform=trans,
+        fontsize=18, verticalalignment='top')
+    return axes
+
 if __name__=="__main__":
-    fd = r"C:\Users\wangs\Documents\35_um_data_100x100x48 niis\abaqus_results\U3RF3jsons"
+    fd = r"E:\35_um_data_100x100x48 niis\abaqus_results\U3RF3jsons"
     data_list = glob.glob(os.path.join(fd, "[0-9]*.json"))
 
     ultimate_force1k = {"GT":[], "Pred":[]}
@@ -106,7 +146,8 @@ if __name__=="__main__":
     xleft = int(((0-tare_strain)/1.44*1E6//100+1)*100)
     xright = 11000
     newx = np.linspace(xleft, xright, (xright - xleft)//100+1)
-
+    compliances = []
+    n = 0
     for i, dataf in enumerate(data_list):
         sample_name = os.path.basename(dataf)
         preddataf = os.path.join(os.path.dirname(dataf),"pred"+sample_name)
@@ -125,9 +166,10 @@ if __name__=="__main__":
 
         #====extract RF3-GT vs RF3-pred at different U3 for each sample====
         a = dfinterp.loc[5000, "RF3"]/pdfinterp.loc[5000, "RF3"]
-        if a<0.5 or a > 1.5: # remove some outliers
+        if a<0.5 or a > 2.0: # remove some outliers
             print(dataf+":"+str(a))
         else:
+            n += 1
             ultimate_force1k["GT"].append(dfinterp.loc[1000, "RF3"] )
             ultimate_force1k["Pred"].append(pdfinterp.loc[1000, "RF3"] )
 
@@ -139,22 +181,29 @@ if __name__=="__main__":
             
             ultimate_force5k["GT"].append(dfinterp.loc[5000, "RF3"] )
             ultimate_force5k["Pred"].append(pdfinterp.loc[5000, "RF3"] )
+            
+            compliance, p = calc_compliance(df["RF3"],df["U3"], 2)
+            compliance_pred, pp = calc_compliance(pdf["RF3"],pdf["U3"], 2)
+            print(f"GT_compliance={compliance}, p={p}\tPred_compliance={compliance_pred}, p={pp}")
+            compliances.append((compliance, compliance_pred))
 
         #====plot RF3, energy vs U3 for each pair of samples====
-        figure, axes = plt.subplots(1, 3, figsize=(12, 3.5))
-        _=plot_force_displacement(df, pdf, "Force vs Displacement", axes[0], ylim=(-1, 1.2*max([dfinterp.loc[5000, "RF3"], pdfinterp.loc[5000, "RF3"]])))
-        _=energy_fraction(df, pdf, "ALLSD/ALLSE", axes[1])
-        _=energy(df, pdf, "ALLSD & ALLSE vs Displacement", axes[2])
+        # figure, axes = plt.subplots(1, 3, figsize=(12, 3.5))
+        # _=plot_force_displacement(df, pdf, "Force vs Displacement", axes[0], ylim=(-1, 1.2*max([dfinterp.loc[5000, "RF3"], pdfinterp.loc[5000, "RF3"]])))
+        # _=energy_fraction(df, pdf, "ALLSD/ALLSE", axes[1])
+        # _=energy(df, pdf, "ALLSD & ALLSE vs Displacement", axes[2])
 
-        plt.tight_layout()
-        figure.savefig(dataf.replace(".json", ".png").replace("U3RF3jsons", "U3RF3plots"), dpi=150)
+        # plt.tight_layout()
+        # # figure.savefig(dataf.replace(".json", ".png").replace("U3RF3jsons", "U3RF3plots"), dpi=150)
         # plt.show()
-        plt.close()
+        # plt.close()
+        
+
 
     #====plot RF3-GT vs RF3-pred at different U3 for all samples====
     plt.style.use("ggplot")
 
-    figure, axes = plt.subplots(2,2, figsize=(12,10))
+    figure, axes = plt.subplots(2,2, figsize=(12,11))
     ax = plot_scatter_with_trendline2(axes[0,0], ultimate_force1k["GT"], ultimate_force1k["Pred"])
     ax.set_title("$\epsilon=1000$", fontweight="bold", fontsize=16)
     ax = plot_scatter_with_trendline2(axes[0,1], ultimate_force2k["GT"], ultimate_force2k["Pred"])
@@ -166,4 +215,20 @@ if __name__=="__main__":
     figure.text(0.5, 0.06, 'Reaction Force (N) - GT Model', ha='center', fontweight="bold", fontsize=16)
     figure.text(0.06, 0.5, 'Reaction Force (N) - Pred Model', va='center', rotation='vertical', fontweight="bold", fontsize=16)
     plt.show()
-    figure.savefig(r"C:\Users\wangs\Google Drive\Dissertation\finite element project\ForcePredVsGT.png", dpi=300)
+    figure.savefig(r"C:\Users\wangs\My Drive\Dissertation\finite element project\ForcePredVsGT.png", dpi=300)
+    print(f"Number of samples {n}")
+    
+    #====plot compliances====
+    gtcompliances, predcompliances = zip(*compliances)
+    figure, ax = plt.subplots(1,1, figsize=(6,5))
+    ax = plot_scatter_compliances(ax, gtcompliances, predcompliances)
+    # ax.set_title("$\epsilon=1000$", fontweight="bold", fontsize=16)
+    plt.tight_layout()
+    plt.show()
+    figure.savefig(r"C:\Users\wangs\My Drive\Dissertation\finite element project\CompliancePredVsGT.png", dpi=300)
+
+    
+
+    
+    
+    
