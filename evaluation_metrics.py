@@ -34,15 +34,35 @@ class LPIPS():
 if __name__=="__main__":
     
     import os, glob, tqdm
+    import pandas as pd
+
+    DATA_ROOT = r"E:\35_um_data_100x100x48 niis\Data"
     
     predFileList = glob.glob(r"E:\35_um_data_100x100x48 niis\meshes\visualize_pred2\pred*.nii.gz")
     gtFileList = [os.path.join(os.path.dirname(i), os.path.basename(i)[4:]) for i in predFileList]
     
-    results = {"PSNR":[], "SSIM":[], "NMI":[], "LPIPS":[], "Dice":[]}
+    results = {"PSNR": [], "SSIM": [], "NMI": [],
+               "LPIPS": [], "Dice": [], "Tn": [], "Twk": []}
     
-    lpips = lpips.LPIPS(net='alex')
+    lpips_f = lpips.LPIPS(net='alex')
     for p, g in tqdm.tqdm(zip(predFileList, gtFileList), total=len(gtFileList)):
         
+        sample_name = os.path.basename(g)
+        sample_id = sample_name.replace(".nii.gz", "")
+        t0 = 0
+        t = int(sample_id[-1])
+        t_zero_nii = ""
+        while t0 < 3:
+            t_zero_nii = os.path.join(
+                DATA_ROOT, sample_id[:-1]+f"{t0}.nii.gz")
+            if os.path.exists(t_zero_nii):
+                results["Tn"].append(
+                    t-t0)
+                break
+            t0 += 1
+
+        results["Twk"].append(t)
+
         pimg = sitk.GetArrayFromImage(sitk.ReadImage(p))
         gimg = sitk.GetArrayFromImage(sitk.ReadImage(g))
         
@@ -51,7 +71,8 @@ if __name__=="__main__":
         results["NMI"].append(normalized_mutual_information(np.expand_dims(gimg, 0), np.expand_dims(pimg, 0)))
         gtensor = nn.Tensor(np.expand_dims(gimg, 0).astype(np.float32)[:, [12,24,36]]/255)
         ptensor = nn.Tensor(np.expand_dims(pimg, 0).astype(np.float32)[:, [12,24,36]]/255)
-        results["LPIPS"].append(lpips(gtensor.float(), ptensor.float()).detach().numpy())
+        results["LPIPS"].append(np.squeeze(
+            lpips_f(gtensor.float(), ptensor.float()).detach().numpy()))
         results["Dice"].append(Dice(gimg, pimg))
         
     for k, v in results.items():
@@ -59,3 +80,9 @@ if __name__=="__main__":
         print(f"{k}:{v.mean()} -std- {v.std()} -min- {v.min()} -max- {v.max()}")
         if k=="Dice":
             print(gtFileList[v.argmin()])
+
+    df = pd.DataFrame(results)
+    print(df.groupby("Tn").mean())
+    print(df.groupby("Tn").count())
+    print(df.groupby("Twk").mean())
+    print(df.groupby("Twk").count())
