@@ -82,7 +82,7 @@ if __name__=="__main__":
             print(gtFileList[v.argmin()])
 
     df = pd.DataFrame(results)
-    print(df.groupby("Tn").mean())
-    print(df.groupby("Tn").count())
     print(df.groupby("Twk").mean())
     print(df.groupby("Twk").count())
+    print(df.groupby("Twk").std())
+    print(df.describe())

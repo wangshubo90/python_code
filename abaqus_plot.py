@@ -13,14 +13,22 @@ import SimpleITK as sitk
 import cv2
 from shubow_tools import imsaveseq
 
+LABELFONT = {'fontname': 'Times New Roman'}
+AXISLABELSIZE = 18
+plt.rcParams['font.family'] = 'Times New Roman'
+
 def plot_force_displacement(data, preddata, title, axes, ylim=(0, 50)):
     axes.plot(data["U3"].to_numpy(), data["RF3"].to_numpy(), "-b")
+    axes.scatter(data["U3"].to_numpy(),
+                 data["RF3"].to_numpy(), color="b", marker="x", s=15.0)
     axes.plot(preddata["U3"].to_numpy(), preddata["RF3"].to_numpy(), "--r")
-    axes.set_title(title)
+    axes.scatter(preddata["U3"].to_numpy(),
+                 preddata["RF3"].to_numpy(), color="r", marker="v", s=15.0)
+    axes.set_title(title, **LABELFONT)
     axes.set_ylim(bottom=ylim[0], top=ylim[1])
     axes.set_xlim(left=0, right=5000)
-    axes.set_xlabel("Displacement ($\mu\epsilon$)")
-    axes.set_ylabel("Reaction Force (N)")
+    axes.set_xlabel("Strain ($\mu\epsilon$)", **LABELFONT)
+    axes.set_ylabel("Reaction Force (N)", **LABELFONT)
     axes.relim()
     axes.autoscale_view()
     return axes
@@ -28,7 +36,7 @@ def plot_force_displacement(data, preddata, title, axes, ylim=(0, 50)):
 def energy_fraction(data, preddata, title, axes):
     axes.plot(data["U3"].to_numpy(), data["ALLSD"].to_numpy() / (data["ALLSE"].to_numpy()+1e-8), "-b")
     axes.plot(preddata["U3"].to_numpy(), preddata["ALLSD"].to_numpy() / (preddata["ALLSE"].to_numpy()+1e-8), "--r")
-    axes.set_title(title)
+    axes.set_title(title, **LABELFONT)
     axes.set_xlim(left=0, right=5000)
     axes.set_ylim(top=1, bottom=0)
     axes.relim()
@@ -42,7 +50,7 @@ def energy(data, preddata, title, axes):
     axes.plot(preddata["U3"].to_numpy(), preddata["ALLSE"].to_numpy(), "--r")
     axes.set_xlim(left=0, right=5000)
     axes.relim()
-    axes.set_title(title)
+    axes.set_title(title, **LABELFONT)
     axes.autoscale_view()
     return axes
 
@@ -82,39 +90,60 @@ def plot_scatter_with_trendline(axes, x, y):
     return axes
 
 def plot_scatter_with_trendline2(axes, x, y):
-    axes.scatter(x,y)
-    z = np.polyfit(x, y, 1)
-    y_hat = np.poly1d(z)(x)
-    x_line = np.linspace(0, max(x), 20)
-    y_line = np.poly1d(z)(x_line)
+    x = np.asarray(x)
+    y = np.asarray(y)
+    axes.scatter(x, y)
 
+    # calculate CCC
     ccc = CCC(x, y)
 
+    # fit y = ax, b=0
+    slope = np.dot(x, y) / np.dot(x, x)
+    y_hat = slope*x
+    x_line = np.linspace(0, max(x), 20)
+    y_line = slope*x_line
+    text = f"y = {slope:0.3f} x\n$R^2$ = {r2_score(y,y_hat):0.3f}\nCCC = {ccc:0.3f}"
+
+    # # fit y = ax+b
+    # z = np.polyfit(x, y, 1)
+    # y_hat = np.poly1d(z)(x)
+    # x_line = np.linspace(0, max(x), 20)
+    # y_line = np.poly1d(z)(x_line)
+    # text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$\nCCC = {ccc:0.3f}"
+
     axes.plot(x_line, y_line, "r--", lw=1)
-    text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$\nCCC = {ccc:0.3f}"
 
     _set_label_tick_color(axes, "black")
     axes.set_ylim(bottom=0, top=int(max(x)*1.2))
     axes.set_xlim(left=0, right=int(max(x)*1.2))
+    axes.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    axes.tick_params(axis='y', labelsize=AXISLABELSIZE)
 
     trans = transforms.blended_transform_factory(axes.transData, axes.transAxes)
-
-    axes.text(0.05, 0.95, text, transform=trans,
-        fontsize=18, verticalalignment='top')
+    x_pos = (axes.get_xlim()[1] - axes.get_xlim()[0]) * 0.05 + axes.get_xlim()[0]
+    # y_pos = (axes.get_ylim()[1] - axes.get_ylim()[0]) * 0.9 + axes.get_ylim()[0]
+    axes.text(x_pos, 0.8, text, transform=trans,
+              fontsize=14, horizontalalignment = "left", **LABELFONT)
     return axes
 
 
 def add_trendline(axis, x, y, style="r--", label=None):
-    z = np.polyfit(x, y, 1)
-
+    x = np.asarray(x)
+    y = np.asarray(y)
+    slope = np.dot(x, y) / np.dot(x, x)
     x_line = np.linspace(0, max(x), 20)
-    y_line = np.poly1d(z)(x_line)
+    # z = np.polyfit(x, y, 1)
+    # y_line = np.poly1d(z)(x_line)
+    y_line = slope*x_line
     line = axis.plot(x_line, y_line, style, lw=1, label=label)
 
-    print(f"y={z[0]:0.3f}x{z[1]:+0.3f}")
-    r2 = r2_score(y, np.poly1d(z)(x))
+    # print(f"y={z[0]:0.3f}x{z[1]:+0.3f}")
+    print(f"y={slope:0.3f}x")
+    # r2 = r2_score(y, np.poly1d(z)(x))
+    r2 = r2_score(y, slope*x)
     print(f"R^2 = {r2}")
-    return line, z, r2
+    # return line, z, r2
+    return line, slope, r2
 
 
 def findStepByDisplacement(df, U3, n_index=2):
@@ -132,25 +161,38 @@ def calc_compliance(x, y, threshold=1.0):
     return results.slope, results.pvalue
     
 def plot_scatter_compliances(axes, x, y):
+    x = np.asarray(x)
+    y = np.asarray(y)
     axes.scatter(x,y)
-    z = np.polyfit(x, y, 1)
-    y_hat = np.poly1d(z)(x)
-    x_line = np.linspace(0, max(x), 20)
-    y_line = np.poly1d(z)(x_line)
-
+    # calculate CCC
     ccc = CCC(x, y)
+
+    # fit y = ax, b=0
+    slope = np.dot(x, y) / np.dot(x, x)
+    y_hat = slope*x
+    x_line = np.linspace(0, max(x), 20)
+    y_line = slope*x_line
+    text = f"$y=${slope:0.3f}$\;x$\n$R^2 = ${r2_score(y,y_hat):0.3f}\nCCC = {ccc:0.3f}"
+
+    # fit y = ax+b
+    # z = np.polyfit(x, y, 1)
+    # y_hat = np.poly1d(z)(x)
+    # x_line = np.linspace(0, max(x), 20)
+    # y_line = np.poly1d(z)(x_line)
+    # text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$\nCCC = {ccc:0.3f}"
 
     axes.plot(x_line, y_line, "r--", lw=1)
     axes.plot(x_line, x_line, "b-", lw=1)
-    text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n$R^2 = {r2_score(y,y_hat):0.3f}$\nCCC = {ccc:0.3f}"
-    axes.set_xlabel("Compliance ($\mu\epsilon/N$) - GT Model", fontweight="bold", fontsize=16)
-    axes.set_ylabel("Compliance ($\mu\epsilon/N$) - Pred Model",fontweight="bold", fontsize=16)
+    axes.set_xlabel("Compliance ($\mu\epsilon/N$) - GT Model", fontsize=AXISLABELSIZE, **LABELFONT)
+    axes.set_ylabel("Compliance ($\mu\epsilon/N$) - Pred Model", fontsize=AXISLABELSIZE, **LABELFONT)
     _set_label_tick_color(axes, "black")
 
     trans = transforms.blended_transform_factory(axes.transData, axes.transAxes)
 
     axes.text(0.05, 0.95, text, transform=trans,
-        fontsize=18, verticalalignment='top')
+              fontsize=14, verticalalignment='top', **LABELFONT)
+    axes.tick_params(axis='x', labelsize=18)
+    axes.tick_params(axis='y', labelsize=18)
     return axes
 
 
@@ -186,6 +228,9 @@ def get_lesion_v(base_image_f, lytic_image_f):
     base_image = sitk.GetArrayFromImage(
         sitk.ReadImage(base_image_f))[:-3, 2:-2, 2:-2]
     lytic_image = sitk.GetArrayFromImage(sitk.ReadImage(lytic_image_f))
+    if lytic_image.shape[1] != 96:
+        lytic_image = lytic_image[:, 2:-2, 2:-2]
+    lytic_image = lytic_image[:-3, :, :]
 
     base_image = (base_image > 10).astype(np.uint8)
     lytic_image = (lytic_image > 10).astype(np.uint8)
@@ -202,7 +247,7 @@ def get_lesion_v(base_image_f, lytic_image_f):
     # print(f"/n{base_image_f}-{np.sum(base_image)}\n")
     # print(f"{lytic_image_f}-{np.sum(lytic_image)}\n")
 
-    lesions = (base_image - lytic_image[:-3]) * base_image
+    lesions = (base_image - lytic_image) * base_image
 
     lesion_percent = np.sum(lesions) / np.sum(base_image) * 100
     return lesion_percent
@@ -234,6 +279,18 @@ def process_3D_wrapper(image, process_3D, *args, **kwargs):
     return np.array([process_3D(image[i], *args, **kwargs) for i in range(image.shape[0])])
 
 
+def set_axes_style(ax: plt.axis):
+    ax.set_facecolor('white')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(True)
+    ax.spines['left'].set_color('black')
+    ax.spines['left'].set_linewidth(2)
+    ax.spines['bottom'].set_visible(True)
+    ax.spines['bottom'].set_color('black')
+    ax.spines['bottom'].set_linewidth(2)
+    ax.grid(False)
+
 if __name__=="__main__":
     fd = r"E:\35_um_data_100x100x48 niis\abaqus_results\U3RF3jsons"
     DATA_ROOT = r"E:\35_um_data_100x100x48 niis\Data"
@@ -245,8 +302,16 @@ if __name__=="__main__":
     ultimate_force3k = {"GT":[], "Pred":[]}
     ultimate_force5k = {"GT":[], "Pred":[]}
     compliances = []
-    compliances_lesion_v = {"compliance_gt": [],
-                            "compliance_pred": [], "ids": []}
+    compliances_lesion_v = {
+        "compliance_gt": [],
+        "compliance_pred": [],
+        "ids": []
+    }
+
+    compliances_lesion_v_n1 = {
+        "lesions": [],
+        "ids": []
+    }
 
     tare_strain = 0.012
     # newx for interpolation
@@ -303,6 +368,10 @@ if __name__=="__main__":
 
             t0 = 0
             t_zero_nii = ""
+            tm1_id = sample_id[:-1]+str(int(sample_id[-1])-1)
+            tm1_f = os.path.join(
+                DATA_ROOT, tm1_id + ".nii.gz")
+
             while t0 < 3:
                 t_zero_nii = os.path.join(
                     DATA_ROOT, sample_id[:-1]+f"{t0}.nii.gz")
@@ -317,6 +386,23 @@ if __name__=="__main__":
                 r"E:\35_um_data_100x100x48 niis\abaqus_results\2dseq_t0", sample_id[
                     :-1]+f"{t0}"
             )
+
+            if tm1_f != t_zero_nii and os.path.exists(tm1_f):
+                tm1_img = sitk.ReadImage(tm1_f)
+                tm1_out_dir = os.path.join(
+                    r"E:\35_um_data_100x100x48 niis\abaqus_results\2dseq_t0", tm1_id
+                )
+                os.makedirs(tm1_out_dir, exist_ok=True)
+                imsaveseq(tm1_img, tm1_out_dir,
+                          sample_id[:-1]+f"{int(sample_id[-1])-1}")
+
+                compliances_lesion_v_n1["ids"].append(
+                    (sample_id, tm1_id))
+                compliances_lesion_v_n1["lesions"].append(
+                    (get_lesion_v(t_zero_nii, gt_nii), get_lesion_v(t_zero_nii, pred_nii), get_lesion_v(t_zero_nii, tm1_f)))
+            else:
+                print(f"-1:{tm1_f} vs 0:{t_zero_nii}")
+
             os.makedirs(t0_out_dir, exist_ok=True)
             imsaveseq(t0_img, t0_out_dir, sample_id[:-1]+f"{t0}")
 
@@ -325,35 +411,46 @@ if __name__=="__main__":
             compliances_lesion_v["compliance_pred"].append(
                 (compliance_pred, get_lesion_v(t_zero_nii, pred_nii)))
 
-        #====plot RF3, energy vs U3 for each pair of samples====
+        # ====plot RF3, energy vs U3 for each pair of samples====
+        pd.DataFrame({"x":df["U3"].to_numpy(), "y":df["RF3"].to_numpy()}).to_csv(dataf.replace(".json", "_GT.csv"))
+        pd.DataFrame({"x":pdf["U3"].to_numpy(), "y":pdf["RF3"].to_numpy()}).to_csv(dataf.replace(".json", "_PRED.csv"))
         # figure, axes = plt.subplots(1, 3, figsize=(12, 3.5))
-        # _=plot_force_displacement(df, pdf, "Force vs Displacement", axes[0], ylim=(-1, 1.2*max([dfinterp.loc[5000, "RF3"], pdfinterp.loc[5000, "RF3"]])))
-        # _=energy_fraction(df, pdf, "ALLSD/ALLSE", axes[1])
-        # _=energy(df, pdf, "ALLSD & ALLSE vs Displacement", axes[2])
-
+        # _ = plot_force_displacement(df, pdf, "Reaction Force vs Strain", axes[0], ylim=(
+        #     -1, 1.2*max([dfinterp.loc[5000, "RF3"], pdfinterp.loc[5000, "RF3"]])))
+        # _ = energy_fraction(df, pdf, "ALLSD/ALLSE", axes[1])
+        # _ = energy(df, pdf, "ALLSD & ALLSE vs Displacement", axes[2])
+        # for i in range(3):
+        #     set_axes_style(axes[i])
         # plt.tight_layout()
-        # # figure.savefig(dataf.replace(".json", ".png").replace("U3RF3jsons", "U3RF3plots"), dpi=150)
-        # plt.show()
+        # figure.savefig(dataf.replace(".json", ".png").replace("U3RF3jsons", "U3RF3plots"), dpi=1000)
+        # # plt.show()
         # plt.close()
         
 
 
     #====plot RF3-GT vs RF3-pred at different U3 for all samples====
-    plt.style.use("ggplot")
+    plt.style.use("seaborn-colorblind")
 
     figure, axes = plt.subplots(2,2, figsize=(12,11))
     ax = plot_scatter_with_trendline2(axes[0,0], ultimate_force1k["GT"], ultimate_force1k["Pred"])
-    ax.set_title("$\epsilon=1000$", fontweight="bold", fontsize=16)
+    ax.set_title("$@1000\mu\epsilon$", fontsize=16, **LABELFONT)
+    set_axes_style(ax)
     ax = plot_scatter_with_trendline2(axes[0,1], ultimate_force2k["GT"], ultimate_force2k["Pred"])
-    ax.set_title("$\epsilon=2000$", fontweight="bold", fontsize=16)
+    ax.set_title("$@2000\mu\epsilon$", fontsize=16, **LABELFONT)
+    set_axes_style(ax)
     ax = plot_scatter_with_trendline2(axes[1,0], ultimate_force3k["GT"], ultimate_force3k["Pred"])
-    ax.set_title("$\epsilon=3000$", fontweight="bold", fontsize=16)
+    ax.set_title("$@3000\mu\epsilon$", fontsize=16, **LABELFONT)
+    set_axes_style(ax)
     ax = plot_scatter_with_trendline2(axes[1,1], ultimate_force5k["GT"], ultimate_force5k["Pred"])
-    ax.set_title("$\epsilon=5000$", fontweight="bold", fontsize=16)
-    figure.text(0.5, 0.06, 'Reaction Force (N) - GT Model', ha='center', fontweight="bold", fontsize=16)
-    figure.text(0.06, 0.5, 'Reaction Force (N) - Pred Model', va='center', rotation='vertical', fontweight="bold", fontsize=16)
+    ax.set_title("$@5000\mu\epsilon$", fontsize=16, **LABELFONT)
+    set_axes_style(ax)
+    figure.text(0.5, 0.06, 'Reaction Force (N) - GT Model',
+                ha='center', fontsize=AXISLABELSIZE, **LABELFONT)
+    figure.text(0.06, 0.5, 'Reaction Force (N) - Pred Model', va='center',
+                rotation='vertical', fontsize=AXISLABELSIZE, **LABELFONT)
     plt.show()
-    figure.savefig(r"C:\Users\wangs\My Drive\Dissertation\finite element project\ForcePredVsGT.png", dpi=300)
+    figure.savefig(
+        r"C:\Users\wangs\My Drive\Dissertation\finite element project\ForcePredVsGT.jpg", dpi=1000)
     print(f"Number of samples {n}")
     
     #====plot compliances====
@@ -363,16 +460,18 @@ if __name__=="__main__":
     print(f"Mean percentage error: {mape.mean():4.2f}% , std={mapestd:4.2f}")
     figure, ax = plt.subplots(1,1, figsize=(6,5))
     ax = plot_scatter_compliances(ax, gtcompliances, predcompliances)
-    # ax.set_title("$\epsilon=1000$", fontweight="bold", fontsize=16)
+    # ax.set_title("$\epsilon=1000$", fontsize=16)
     plt.tight_layout()
     plt.show()
-    figure.savefig(r"C:\Users\wangs\My Drive\Dissertation\finite element project\CompliancePredVsGT.png", dpi=300)
+    figure.savefig(
+        r"C:\Users\wangs\My Drive\Dissertation\finite element project\CompliancePredVsGT.jpg", dpi=1000)
 
     # ====plot compliances vs lesion volume====
 
     import matplotlib.lines as mlines
     import matplotlib.patches as mpatches
     from matplotlib.legend_handler import HandlerTuple
+    import matplotlib.font_manager as font_manager
 
     figure, ax = plt.subplots(1, 1, figsize=(6, 5))
 
@@ -392,20 +491,176 @@ if __name__=="__main__":
     
     plt.xlim(left=0, right=100)
     plt.ylim(bottom=0, top=1000)
-    plt.xlabel("Lesion Volume (%)", fontweight="bold", fontsize=16)
-    plt.ylabel("Compliance ($\mu\epsilon/N$)", fontweight="bold", fontsize=16)
+    plt.xlabel("Lesion Volume (%)",
+               fontsize=AXISLABELSIZE, **LABELFONT)
+    plt.ylabel("Compliance ($\mu\epsilon/N$)",
+             fontsize=AXISLABELSIZE, **LABELFONT)
     _set_label_tick_color(ax, "black")
-    line_gt, _, r2_gt = add_trendline(ax, gt_x, gt_y, "b-", "GT")
-    line_pred, _, r2_pred = add_trendline(ax, pred_x, pred_y, "r--", "Pred")
+    line_gt, slope_gt, r2_gt = add_trendline(ax, gt_x, gt_y, "b-", "GT")
+    line_pred, slope_pred, r2_pred = add_trendline(
+        ax, pred_x, pred_y, "r--", "Pred")
     
     legend_handle_gt = mlines.Line2D([], [], color='b', marker='o', linestyle='-',
-                                     markersize=6, label=f"GT: $R^2$ = {r2_gt:3.2f}")
+                                     markersize=6, label=f"GT: $R^2$ = {r2_gt:3.2f}, $y={slope_gt:3.2f} x$")
     legend_handle_pred = mlines.Line2D([], [], color='r', marker='x', linestyle='--',
-                                       markersize=6, label=f"Pred: $R^2$ = {r2_pred:3.2f}")
+                                       markersize=6, label=f"Pred: $R^2$ = {r2_pred:3.2f}, $y={slope_pred:3.2f} x$")
     
+    font_props = font_manager.FontProperties(
+        size=12, weight='bold', family='Times New Roman')
     plt.legend(handles=[legend_handle_gt,
-               legend_handle_pred], loc="upper left")
+               legend_handle_pred], loc="upper left", prop=font_props)
     plt.tight_layout()
     plt.show()
     figure.savefig(
-        r"C:\Users\wangs\My Drive\Dissertation\finite element project\ComplianceVsLesionVolume.png", dpi=300)
+        r"C:\Users\wangs\My Drive\Dissertation\finite element project\ComplianceVsLesionVolume.jpg", dpi=1000)
+
+    print(compliances_lesion_v_n1)
+    print(compliances_lesion_v)
+
+    # ====plot lesion volume tn-1 vs lesion volume tn====
+    fig = plt.figure(figsize=(14, 12.5), facecolor='none')
+    fig.patch.set_alpha(0.0)
+    ax1 = plt.subplot2grid((2, 4), (0, 0), colspan=2)
+    ax = plt.subplot2grid((2, 4), (0, 2), colspan=2)
+    ax2 = plt.subplot2grid((2, 4), (1, 1), colspan=2)
+    ax1.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    ax1.tick_params(axis='y', labelsize=AXISLABELSIZE)
+    ax2.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    ax2.tick_params(axis='y', labelsize=AXISLABELSIZE)
+    set_axes_style(ax)
+    set_axes_style(ax1)
+    set_axes_style(ax2)
+
+    # ==============
+
+    n_points = len(compliances_lesion_v["compliance_gt"])
+    colors = draw_colors_from_colormap(n_points, "gist_rainbow")
+
+    for i in range(n_points):
+        ax.scatter(compliances_lesion_v["compliance_gt"][i][1],
+                   compliances_lesion_v["compliance_gt"][i][0], color=colors[i], marker="o")
+        ax.scatter(compliances_lesion_v["compliance_pred"][i][1],
+                   compliances_lesion_v["compliance_pred"][i][0], color=colors[i], marker="x")
+        ax.plot([compliances_lesion_v["compliance_gt"][i][1], compliances_lesion_v["compliance_pred"][i][1]],
+                [compliances_lesion_v["compliance_gt"][i][0], compliances_lesion_v["compliance_pred"][i][0]], color="k", linestyle="-", lw=1)
+
+    gt_y, gt_x = zip(*compliances_lesion_v["compliance_gt"])
+    pred_y, pred_x = zip(*compliances_lesion_v["compliance_pred"])
+
+    ax.set_xlim(left=0, right=80)
+    ax.set_ylim(bottom=0, top=1000)
+    ax.set_xlabel("Lesion Volume (%)",
+                  fontsize=AXISLABELSIZE, **LABELFONT)
+    ax.set_ylabel("Compliance ($\mu\epsilon/N$)",
+                 fontsize=AXISLABELSIZE, **LABELFONT)
+
+    
+    _set_label_tick_color(ax, "black")
+    line_gt, slope_gt, r2_gt = add_trendline(ax, gt_x, gt_y, "b-", "GT")
+    line_pred, slope_pred, r2_pred = add_trendline(
+        ax, pred_x, pred_y, "r--", "Pred")
+
+    legend_handle_gt = mlines.Line2D([], [], color='b', marker='o', linestyle='-',
+                                     markersize=6, label="")
+    legend_handle_pred = mlines.Line2D([], [], color='r', marker='x', linestyle='--',
+                                       markersize=6, label="")
+
+    font_props = font_manager.FontProperties(
+        size=12, weight='bold', family='Times New Roman')
+    ax.legend(handles=[legend_handle_gt,
+                       legend_handle_pred], loc="upper left", prop=font_props)
+    
+    trans = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+    x_pos = 0.15
+    text1 = f"GT: $R^2$ = {r2_gt:3.2f}, y = {slope_gt:3.2f} x"
+    text2 = f"Pred: $R^2$ = {r2_pred:3.2f}, y = {slope_pred:3.2f} x"
+    ax.text(x_pos, 0.94, text1, transform=trans,
+              fontsize=14, horizontalalignment = "left", **LABELFONT)
+    ax.text(x_pos, 0.89, text2, transform=trans,
+              fontsize=14, horizontalalignment = "left", **LABELFONT)
+    
+    ax.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    ax.tick_params(axis='y', labelsize=AXISLABELSIZE)
+    plt.yticks(fontsize=AXISLABELSIZE)
+    plt.xticks(fontsize=AXISLABELSIZE)
+
+    # ==============
+
+    plot_scatter_compliances(ax1, gtcompliances, predcompliances)
+    ax1.set_xlim(right=1100)
+    ax1.set_ylim(top=1100)
+    ax1.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    ax1.tick_params(axis='y', labelsize=AXISLABELSIZE)
+    plt.yticks(fontsize=AXISLABELSIZE)
+    plt.xticks(fontsize=AXISLABELSIZE)
+
+    # ==============
+
+    lesion_gt, lesion_pred, lesion_tm1 = zip(
+        *compliances_lesion_v_n1["lesions"])
+    lesion_gt = np.array(lesion_gt)
+    lesion_pred = np.array(lesion_pred)
+    lesion_tm1 = np.array(lesion_tm1)
+
+    n = len(lesion_gt)
+    colors = draw_colors_from_colormap(n, "gist_rainbow")
+
+    # for i in range(n):
+    #     ax.plot(["$t_n$", "$t_{n+1}$"], [lesion_tm1[i],
+    #             lesion_pred[i]], color=colors[i], linestyle="-", lw=1)
+    #     ax.plot(["$t_n$", "$t_{n+1}$"], [lesion_tm1[i],
+    #             lesion_gt[i]], color=colors[i], linestyle="--", lw=1)
+
+    import seaborn as sns
+    dataframe = {"$t_n$": lesion_tm1,
+                 "$t_{n+1}$ GT": lesion_gt, "$t_{n+1}$ Pred": lesion_pred}
+    dataframe = pd.DataFrame(dataframe)
+    dataframe.to_csv(r"C:\Users\wangs\My Drive\Dissertation\finite element project\lesions.csv")
+    dataframe = dataframe.melt(
+        var_name="group", value_name="Lesion Volume (%)")
+    sns.boxplot(data=dataframe, ax=ax2, x="group", y="Lesion Volume (%)", palette=sns.color_palette("Paired", 9)[2::-1])
+    sns.stripplot(data=dataframe, ax=ax2, x="group",
+                  y="Lesion Volume (%)", color="black", size=4)
+    # ax.set_xlabel("")
+    ax2.set_ylim(bottom=0, top=80)
+    ax2.set_xlabel("",
+                   fontsize=AXISLABELSIZE, **LABELFONT)
+    ax2.set_ylabel("Lesion Volume (%)", fontsize=AXISLABELSIZE, **LABELFONT)
+    _set_label_tick_color(ax2, "black")
+    ax2.tick_params(axis='x', labelsize=AXISLABELSIZE)
+    ax2.tick_params(axis='y', labelsize=AXISLABELSIZE)
+    plt.yticks(fontsize=AXISLABELSIZE)
+    plt.xticks(fontsize=AXISLABELSIZE)
+    fig.subplots_adjust(left=0.1, right=0.95, top=0.95,
+                        bottom=0.05, hspace=0.3, wspace=0.6)
+    # fig.text(0.03, 0.95, 'A',
+    #          ha='center', fontsize=20, **LABELFONT)
+    # fig.text(0.5, 0.95, 'B',
+    #          ha='center', fontsize=20, **LABELFONT)
+    # fig.text(0.27, 0.45, 'C',
+    #          ha='center', fontsize=20, **LABELFONT)
+    plt.show()
+    fig.savefig(
+        r"C:\Users\wangs\My Drive\Dissertation\finite element project\Figure4Compiled.jpg", dpi=1000)
+
+
+    import statsmodels.api as sm
+    from statsmodels.formula.api import ols
+    from statsmodels.stats.multicomp import pairwise_tukeyhsd
+
+    # Fit ANOVA model
+    dataframe.columns = ["group", "values"]
+    model = ols('values ~ group', data=dataframe).fit()
+    anova_table = sm.stats.anova_lm(model, typ=2)
+
+    # Print ANOVA results
+    print("ANOVA results:")
+    print(anova_table)
+
+    # Perform Tukey's HSD post hoc test
+    posthoc = pairwise_tukeyhsd(dataframe['values'], dataframe['group'])
+
+    # Print post hoc test results
+    print("\nPost hoc test results:")
+    print(posthoc)
+    print("")
